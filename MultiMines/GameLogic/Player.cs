@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace MultiMines
+namespace MultiMines.GameLogic
 {
     public class Player
     {
-        public string ConnectionId { get; private set; }
         public string Name { get; private set; }
+        public long Id { get; private set; }
 
-        public Player(string connectionId, string name)
+        public Player(long id, string name)
         {
-            ConnectionId = connectionId;
+            Id = id;
             Name = name;
         }
     }
