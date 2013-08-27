@@ -5,8 +5,9 @@ using System.Web;
 
 namespace MultiMines.GameLogic
 {
-    public abstract class GameState
+    public interface IGame<S, M> where S : IEquatable<S>
     {
-        public abstract bool Verify(object gameData);
+        S State { get; }
+        S Transition(M move);
     }
 }

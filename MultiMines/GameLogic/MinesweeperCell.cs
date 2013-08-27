@@ -13,12 +13,12 @@ namespace MultiMines.GameLogic
 
     public enum CellStatus
     {
-        CoveredUnflagged,
+        Unflagged,
         Flagged,
         Uncovered
     }
 
-    public class Cell
+    public class MinesweeperCell
     {
         public CellType Type { get; set; }
 
@@ -28,12 +28,12 @@ namespace MultiMines.GameLogic
 
         public int Y { get; private set; }
 
-        public Cell(int x, int y, CellType type)
+        public MinesweeperCell(int x, int y, CellType type)
         {
             X = x;
             Y = y;
             Type = type;
-            Status = CellStatus.CoveredUnflagged;
+            Status = CellStatus.Unflagged;
         }
 
         public void Uncover()

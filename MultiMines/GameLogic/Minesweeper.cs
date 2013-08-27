@@ -5,19 +5,30 @@ using System.Web;
 
 namespace MultiMines.GameLogic
 {
-    public class Minesweeper : Game
+    public class Minesweeper : IGame<MinesweeperState, MinesweeperMove>
     {
         public MinesweeperBoard Board { get; private set; }
 
-        public Minesweeper(long id)
-        {
-            Id = id;
-        }
+        public long Id { get; private set; }
+
+        public MinesweeperState State { get; private set; }
+
+        public Player[] Players { get; private set; }
+
+        public Player Winner { get; private set; }
 
         public Minesweeper(long id, Player[] players) 
-            : this(id)
         {
             Id = id;
+            Players = players;
+        }
+
+        public Minesweeper(long id, MinesweeperState state, Player[] players) 
+            : this(id, players)
+        {
+            Id = id;
+            State = state;
+            Players = players;
         }
 
         public Minesweeper(long id, int width, int height, int numMines, Player[] players) 
@@ -26,10 +37,11 @@ namespace MultiMines.GameLogic
             Board = new MinesweeperBoard(width, height, numMines);
         }
 
-        public override GameState Transition(MinesweeperMove move)
+        public MinesweeperState Transition(MinesweeperMove move)
         {
-            return move.EndState;
+            State.Board.Uncover(move.X, move.Y);
+            State.IncrementId();
+            return State;
         }
-
     }
 }
