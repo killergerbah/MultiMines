@@ -16,10 +16,14 @@ COLORS = {
 							new cc.Color4B(119, 136, 153, 255) 
 							new cc.Color4B(0, 0, 0, 100)]
 }
+
 CELL_WIDTH = 20
 
 class MinesweeperController
 	constructor: (@board, @boardLayer)->
+		#hack to get font to load
+		@boardLayer.addChild cc.LabelBMFont.create(" ", "/Content/arial16.fnt", CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
+		
 	uncover: (i, j)->
 		uncovered = @board.uncover(i, j)
 		if uncovered.length == 1 
