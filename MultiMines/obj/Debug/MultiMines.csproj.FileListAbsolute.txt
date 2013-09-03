@@ -43,3 +43,6 @@ C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Sas
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\SassAndCoffee.Core.dll
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\SassAndCoffee.JavaScript.dll
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\SassAndCoffee.Ruby.dll
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\arial16.png
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\Nimbus.fnt
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\arial16.fnt

@@ -62,6 +62,7 @@ class @MinesweeperBoard
 	uncover: (x, y) ->
 		cell = this.get(x, y)
 		if cell.Type == CELL_TYPE.Mined
+			cell.Status = CELL_STATUS.Uncovered
 			return [ cell ]
 		uncovered = []
 		queue = [ cell ]

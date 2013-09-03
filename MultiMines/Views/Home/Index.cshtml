@@ -2,7 +2,12 @@
     ViewBag.Title = "Playground";
 }
 
-<canvas id="gameCanvas" width="1280" height="720"></canvas>
+<canvas id="gameCanvas" width="1280" height="720" unselectable='on' onselectstart='return false;' onmousedown='return false;'></canvas>
 
 <script src="~/Scripts/jquery-1.6.4.min.js"></script>
+<script src="~/Scripts/jquery.signalR-1.1.3.js"></script>
+<script src="~/signalr/hubs"></script>
 <script src="~/Scripts/minesweeper_cocos2d.js"></script>
+@section Head{
+    <link href="~/Content/Stylesheets/minesweeper.css" rel="stylesheet" />
+}

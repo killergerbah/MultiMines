@@ -162,6 +162,7 @@
     </Compile>
     <Compile Include="GameLogic\MinesweeperBoard.cs" />
     <Compile Include="GameLogic\Player.cs" />
+    <Compile Include="Hubs\MinesweeperHub.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +172,8 @@
     <Content Include="Content\arial16.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\mine.png" />
+    <Content Include="Content\Stylesheets\minesweeper.css" />
     <Content Include="Global.asax" />
     <Content Include="Content\Nimbus.fnt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

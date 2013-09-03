@@ -39,9 +39,24 @@ namespace MultiMines.GameLogic
 
         public MinesweeperState Transition(MinesweeperMove move)
         {
+            if (State == null)
+            {
+                throw new InvalidOperationException("This game has no state");
+            }
             State.Board.Uncover(move.X, move.Y);
             State.IncrementId();
             return State;
         }
+
+        public void SetInitialState(MinesweeperState state)
+        {
+            if (state != null)
+            {
+                throw new InvalidOperationException("The state for this game is already set");
+            }
+            State = state;
+            return;
+        }
+
     }
 }

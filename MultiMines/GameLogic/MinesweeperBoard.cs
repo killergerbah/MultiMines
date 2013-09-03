@@ -75,6 +75,7 @@ namespace MultiMines.GameLogic
             var cell = this[i, j];
             if (cell.Type == CellType.Mined)
             {
+                cell.Uncover();
                 return true;
             }
 
@@ -96,7 +97,10 @@ namespace MultiMines.GameLogic
                     return x.Type == CellType.Mined;
                 }).Any())
                 {
-                    neighbors.ForEach((x) => { toCascade.Enqueue(x); });
+                    foreach(MinesweeperCell neighbor in neighbors)
+                    {
+                        toCascade.Enqueue(neighbor);
+                    }
                 }
             }
             return false;
@@ -111,8 +115,8 @@ namespace MultiMines.GameLogic
                 this[i + 1, j - 1],
                 this[i - 1, j],
                 this[i + 1, j],
-                this[i + 1, j - 1],
-                this[i + 1, j],
+                this[i - 1, j + 1],
+                this[i, j + 1],
                 this[i + 1,j + 1]
             }.Where((x) => { return x != null; }).ToList();
         }
