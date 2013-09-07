@@ -71,7 +71,8 @@ namespace MultiMinesTest
         public void MinesweeperBoard_CascadesAllButOne_WithOneMine()
         {
             int width = 50, height = 50;
-            var board = new MinesweeperBoard(width, height, 1);
+            var board = new MinesweeperBoard(width, height, 0);
+            board[0, 0].Type = CellType.Mined;
             board.Uncover(25, 25);
             var cascaded = 0;
             for (var i = 0; i < width; i++)

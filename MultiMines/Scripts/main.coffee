@@ -39,11 +39,18 @@ cocos2dApp = cc.Application.extend {
 			that.controller = new that.MinesweeperController(that.board, layer, that.minesweeperHub)
 			that.controller.init()
 	}
-	new cocos2dApp(that.minesweeperScene)
+	minesweeperApp = new cocos2dApp(that.minesweeperScene)
 
 @minesweeperHub.client.uncover = (i, j)->
 	that.controller.uncoverRemotely(i, j)
-	
+
+@minesweeperHub.client.refresh = ()->
+	that.location.reload()
+
 $.connection.hub.start().done( ()->
 	that.minesweeperHub.server.getBoard()
+	$("#reset_board").click((e)->
+		e.preventDefault()
+		that.minesweeperHub.server.resetBoard()
+	)
 )

@@ -93,10 +93,14 @@ class @MinesweeperController
 		cellLayer = @get(i,j)
 		if not cellLayer?
 			return
-		mineSprite = cc.Sprite.create("/Content/mine.png");
-		mineSprite.setScale(that.CELL_WIDTH / MINE_WIDTH);
-		mineSprite.setPosition(that.CELL_WIDTH / 2, that.CELL_WIDTH / 2)
-		cellLayer.addChild mineSprite
+		cellLabel = cc.LabelTTF.create("X", "Arial", cc.size(that.CELL_WIDTH, that.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
+		cellLabel.setPosition(that.CELL_WIDTH / 2, that.CELL_WIDTH / 2)
+		cellLabel.setColor(new cc.Color4B(0, 0, 0, 255))
+		cellLayer.addChild cellLabel
+		#mineSprite = cc.Sprite.create("/Content/mine.png");
+		#mineSprite.setScale(that.CELL_WIDTH / MINE_WIDTH);
+		#mineSprite.setPosition(that.CELL_WIDTH / 2, that.CELL_WIDTH / 2)
+		#cellLayer.addChild mineSprite
 		
 	displayNumMinedNeighbors: (i, j, numMinedNeighbors)->
 		cellLayer = @get(i, j)
@@ -113,6 +117,8 @@ class @MinesweeperController
 	get: (i, j)->
 		return @cellMap[i][j]
 
+	highlightCell: (i, j, color)->
+		
 	#Highlight cell on mouseover
 	onMouseMoved: (e)->
 		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())

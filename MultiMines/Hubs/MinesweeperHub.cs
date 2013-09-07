@@ -13,22 +13,6 @@ namespace MultiMines.Hubs
     {
         //temporary; serve static board for testing purposes
         public static MinesweeperBoard Board = new MinesweeperBoard(30, 16, 99);
-        public static int numConnected = 0;
-        public override Task OnConnected()
-        {
-            if (numConnected == 0)
-            {
-                Board = new MinesweeperBoard(30, 16, 99);
-            }
-            numConnected++;
-            return base.OnConnected();
-        }
-
-        public override Task OnDisconnected()
-        {
-            numConnected--;
-            return base.OnDisconnected();
-        }
 
         public void GetBoard()
         {
@@ -38,7 +22,18 @@ namespace MultiMines.Hubs
         public void Uncover(int i, int j)
         {
             Board.Uncover(i, j);
-            Clients.Others.uncover(i, j);
+            Clients.Others.Uncover(i, j);
         }
+
+        public void ResetBoard()
+        {
+            Board = new MinesweeperBoard(30, 16, 99);
+            Clients.All.Refresh();
+        }
+
+       /* public void BroadcastCursor(int i, int j)
+        {
+            Clients.Others.DrawCursor(i, j);
+        }*/
     }
 }

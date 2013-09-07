@@ -1,0 +1,22 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+<div class="alert">
+    @{ 
+        var error = TempData["error"]; 
+        if(error != null){
+            @error
+        }
+    }
+</div>
+<form method ="post" action="register/create">
+    <label for="username">Username:</label><br />
+    <input type="text" name="username" /><br />
+    <label for="password">Password:</label><br />
+    <input type="password" name="password" /><br />
+    <label for="confirmPassword">Confirm password:</label><br />
+    <input type="password" name="confirmPassword" /><br />
+    <input type="submit" />
+</form>
+<p />
+<a href="home">Login</a>
