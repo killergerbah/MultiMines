@@ -11,9 +11,9 @@ namespace MultiMinesTest
         public void MinesweeperBoard_WithCorrectNumberOfMines_InitializesBoard()
         {
             int width = 50, height = 50, numMines = 100;
-            Player p1 = new Player(1, "p1");
-            Player p2 = new Player(2, "p2");
-            Player[] players = new Player[] { p1, p2 };
+            User p1 = new User(1, "p1");
+            User p2 = new User(2, "p2");
+            User[] players = new User[] { p1, p2 };
             Minesweeper game = new Minesweeper(1, width, height, numMines, players);
             var board = game.Board;
             var actualNumMines = 0;
