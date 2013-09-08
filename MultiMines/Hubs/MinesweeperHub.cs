@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
+using WebMatrix.WebData;
 
 namespace MultiMines.Hubs
 {
@@ -29,6 +30,16 @@ namespace MultiMines.Hubs
         {
             Board = new MinesweeperBoard(30, 16, 99);
             Clients.All.Refresh();
+        }
+
+        public void DisplayUserCursor(int i, int j, int userId)
+        {
+            Clients.Others.DisplayUserCursor(i, j, userId);
+        }
+
+        public void GetMyUserId()
+        {
+            Clients.Caller.SetMyUserId(WebSecurity.CurrentUserId);
         }
 
        /* public void BroadcastCursor(int i, int j)

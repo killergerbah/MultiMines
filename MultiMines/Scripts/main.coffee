@@ -1,4 +1,6 @@
+ms = this.ms ? (this.ms = {})
 that = this
+ms.UPDATE_INTERVAL = 40
 
 cocos2dApp = cc.Application.extend {
 	config: document.ccConfig
@@ -15,42 +17,55 @@ cocos2dApp = cc.Application.extend {
 		director.setDisplayStats(@config['showFPS'])
 		#director.runWithScene(new @startScene())
 		#cc.Loader.getInstance().preload({src: "../Content/Nimbus.fnt"})
-		cc.LoaderScene.preload(that.g_resources, ()->
+		cc.LoaderScene.preload(ms.g_resources, ()->
 			director.replaceScene(new this.startScene())
 		this);
 
 		return true
 }
-
-@minesweeperHub = $.connection.minesweeperHub
-@minesweeperHub.client.setBoard = (serializedBoard)->
-	that.board = new MinesweeperBoard(JSON.parse(serializedBoard))
+ms.myUserId = 0 #default
+ms.minesweeperHub = $.connection.minesweeperHub
+ms.connection = new ms.MinesweeperConnection(ms.minesweeperHub, ms.UPDATE_INTERVAL)
+ms.minesweeperHub.client.setBoard = (serializedBoard)->
+	ms.board = new ms.MinesweeperBoard(JSON.parse(serializedBoard))
 	$("canvas")
-		.attr("width", that.board.width * (that.CELL_WIDTH + that.BORDER_WIDTH) + that.BORDER_WIDTH)
-		.attr("height", that.board.height * (that.CELL_WIDTH + that.BORDER_WIDTH) + that.BORDER_WIDTH)
-	that.minesweeperScene = cc.Scene.extend {
+		.attr("width", ms.board.width * (ms.CELL_WIDTH + ms.BORDER_WIDTH) + ms.BORDER_WIDTH)
+		.attr("height", ms.board.height * (ms.CELL_WIDTH + ms.BORDER_WIDTH) + ms.BORDER_WIDTH)
+	ms.minesweeperScene = cc.Scene.extend {
 		onEnter: ()->
 			@_super()
 			#hack to get font to load
 			#@addChild cc.LabelBMFont.create(" ", "/Content/arial16.fnt", 50, cc.TEXT_ALIGNMENT_CENTER)
-			layer = new that.CCMinesweeperBoardLayer(that.board.width, that.board.height)
+			layer = new ms.CCMinesweeperBoardLayer(ms.board.width, ms.board.height)
 			layer.init()
 			@addChild layer
-			that.controller = new that.MinesweeperController(that.board, layer, that.minesweeperHub)
-			that.controller.init()
+			ms.controller = new ms.MinesweeperController(ms.board, layer, ms.connection)
+			ms.controller.init()
 	}
-	minesweeperApp = new cocos2dApp(that.minesweeperScene)
+	minesweeperApp = new cocos2dApp(ms.minesweeperScene)
 
-@minesweeperHub.client.uncover = (i, j)->
-	that.controller.uncoverRemotely(i, j)
+ms.minesweeperHub.client.uncover = (i, j)->
+	ms.controller.uncoverRemotely(i, j)
 
-@minesweeperHub.client.refresh = ()->
+ms.minesweeperHub.client.refresh = ()->
 	that.location.reload()
 
+ms.minesweeperHub.client.setMyUserId = (userId)->
+	if not userId?
+		throw "You need to log-in before playing!"
+	ms.myUserId = userId
+	
+ms.minesweeperHub.client.displayUserCursor = (i, j, userId)->
+	if userId == ms.myUserId
+		ms.controller.displayUserCursor(i, j, userId, ms.COLORS.User.Mine.Up)
+	else
+		ms.controller.displayUserCursor(i, j, userId, ms.COLORS.User.Theirs.Up)
+	
 $.connection.hub.start().done( ()->
-	that.minesweeperHub.server.getBoard()
+	ms.minesweeperHub.server.getBoard()
+	ms.minesweeperHub.server.getMyUserId();
 	$("#reset_board").click((e)->
 		e.preventDefault()
-		that.minesweeperHub.server.resetBoard()
+		ms.minesweeperHub.server.resetBoard()
 	)
 )

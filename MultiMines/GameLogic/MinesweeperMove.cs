@@ -11,15 +11,15 @@ namespace MultiMines.GameLogic
 
         public int Y { get; private set; }
 
-        public Player Player
+        public User User
         {
             get;
             private set;
         }
 
-        public MinesweeperMove(Player player, int x, int y) 
+        public MinesweeperMove(User user, int x, int y) 
         {
-            Player = player;
+            User = user;
             X = x;
             Y = y;
         }

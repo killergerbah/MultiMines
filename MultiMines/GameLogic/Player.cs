@@ -5,12 +5,12 @@ using System.Web;
 
 namespace MultiMines.GameLogic
 {
-    public class Player
+    public class User
     {
         public string Name { get; private set; }
         public long Id { get; private set; }
 
-        public Player(long id, string name)
+        public User(long id, string name)
         {
             Id = id;
             Name = name;

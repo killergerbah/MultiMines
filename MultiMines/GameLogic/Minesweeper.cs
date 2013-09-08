@@ -13,26 +13,26 @@ namespace MultiMines.GameLogic
 
         public MinesweeperState State { get; private set; }
 
-        public Player[] Players { get; private set; }
+        public User[] Users { get; private set; }
 
-        public Player Winner { get; private set; }
+        public User Winner { get; private set; }
 
-        public Minesweeper(long id, Player[] players) 
+        public Minesweeper(long id, User[] users) 
         {
             Id = id;
-            Players = players;
+            Users = users;
         }
 
-        public Minesweeper(long id, MinesweeperState state, Player[] players) 
-            : this(id, players)
+        public Minesweeper(long id, MinesweeperState state, User[] users)
+            : this(id, users)
         {
             Id = id;
             State = state;
-            Players = players;
+            Users = users;
         }
 
-        public Minesweeper(long id, int width, int height, int numMines, Player[] players) 
-            : this(id, players)
+        public Minesweeper(long id, int width, int height, int numMines, User[] users) 
+            : this(id, users)
         {
             Board = new MinesweeperBoard(width, height, numMines);
         }

@@ -1,15 +1,22 @@
-﻿that = this
-@BORDER_WIDTH = 1
-@CELL_WIDTH = 20
-@MINE_WIDTH = 50
-COLORS = {
+﻿ms = this.ms ? (this.ms = {})
+
+ms.BORDER_WIDTH = 1
+ms.CELL_WIDTH = 20
+ms.MINE_WIDTH = 50
+ms.COLORS = {
 	CellActive: new cc.Color4B(230, 230, 230, 255)
 	CellIdle: new cc.Color4B(235, 235, 235, 255)
 	CellUncovered: new cc.Color4B(250, 250, 250)
 	Background: new cc.Color4B(255, 255, 255, 255)
-	Cursor: {
-			Down: new cc.Color4B(255, 0, 255, 150)
-			Up: new cc.Color4B(255, 0, 0, 40)
+	User: {
+			Mine: {
+				Up: new cc.Color4B(0, 0, 255, 40)
+				Down: new cc.Color4B(0, 0, 255, 100)
+			}
+			Theirs: {
+				Up: new cc.Color4B(255, 0, 0, 40)
+				Down: new cc.Color4B(255, 0, 0, 100)
+			}
 		}
 	CellLabels: [	new cc.Color4B(0, 0, 255, 255)
 							new cc.Color4B(0, 255, 0, 255)
@@ -21,27 +28,93 @@ COLORS = {
 							new cc.Color4B(119, 136, 153, 255) 
 							new cc.Color4B(0, 0, 0, 100)]
 }
-
-class @MinesweeperController
-	constructor: (@board, @boardLayer, @minesweeperHub)->
+class ms.MinesweeperConnection
+	_updateCallbacks = []
 	
+	_registeredCallbacks = []
+	
+	_queueCallback = (callback, args)->
+		_updateCallbacks.push({
+			callback: callback,
+			args: args
+		})
+	
+	_updateInterval = ms.UPDATE_INTERVAL #default value
+		
+	_update = ()->
+		#console.log("something")
+		while _updateCallbacks.length > 0
+			callback = _updateCallbacks.pop()
+			callback.callback.apply(this, callback.args)
+		setTimeout(_update, _updateInterval)
+
+	constructor: (@minesweeperHub, @updateInterval)->
+		_updateInterval = @updateInterval
+		_update()
+		
+	uncover: (i, j)->
+		_queueCallback(@minesweeperHub.server.uncover, [i, j])
+	
+	displayUserCursor: (i, j, userId)->
+		_queueCallback(@minesweeperHub.server.displayUserCursor, [i, j, userId])
+			
+	
+class ms.MinesweeperController
+	constructor: (@board, @boardLayer, @connection)->
+		@myCurrentColor = ms.COLORS.User.Mine.Up
+		@myLastPosition = null
 	init: ()->
 		for i in [0..@board.height - 1]
 			for j in [0..@board.width - 1]
 				@_displayCellState(@board.get(i, j))
 				
 	uncover: (i, j)->
-		@minesweeperHub.server.uncover(i, j)
+		@connection.uncover(i, j)
 		@uncoverRemotely(i, j)
 	
 	uncoverRemotely: (i, j)->
 		uncovered = @board.uncover(i, j)
 		for cell in uncovered
 			@_displayCellState(cell)
+	
+	handleMouseMoved: (e)->
+		#console.log "moved"
+		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
+		if not cellTouchedIndices?
+			return
+		#console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)
+		x = cellTouchedIndices.x
+		y = cellTouchedIndices.y
+		#check position actually changed
+		if @myLastPosition? and @myLastPosition.x == x and @myLastPosition.y == y
+			return
+		@myLastPosition = cellTouchedIndices;
+		@connection.displayUserCursor(x, y, ms.myUserId) 
+		@displayUserCursor(x, y, ms.myUserId, @myCurrentColor)
+	
+	handleMouseUp: (e)->
+		console.log "up"
+		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
+		if not cellTouchedIndices?
+			return
+		ms.controller.uncover(cellTouchedIndices.x, cellTouchedIndices.y)
+		@myCurrentColor = ms.COLORS.User.Mine.Up
+	
+	handleMouseDown: (e)->
+		console.log "down"
+		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
+		if not cellTouchedIndices?
+			return
+		console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)	
+		@myCurrentColor = ms.COLORS.User.Mine.Down
+		@displayUserCursor(cellTouchedIndices.x, cellTouchedIndices.y, ms.myUserId, @currentColor)
+	
+	displayUserCursor: (i, j, userId, color)->
+		@boardLayer.displayCursor(i, j, userId, color)
 		
 	_displayCellState: (cell)->
-		if cell.Status == that.CELL_STATUS.Uncovered
-			if cell.Type == that.CELL_TYPE.Mined 
+		if cell.Status == ms.CELL_STATUS.Uncovered
+			if cell.Type == ms.CELL_TYPE.Mined 
 				@boardLayer.displayMined(cell.X, cell.Y)
 				return
 			numMinedNeighbors = @board.getNumMinedNeighbors(cell.X, cell.Y)
@@ -49,52 +122,71 @@ class @MinesweeperController
 			#	cellLabel = cc.LabelTTF.create(numMinedNeighbors.toString(), 'Tahoma', 16, cc.size(CELL_WIDTH, CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
 			#	cellLabel = cc.LabelBMFont.create(numMinedNeighbors.toString(), "/Content/arial16.fnt", CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
 			#	cellLabel.setPosition(CELL_WIDTH / 2, CELL_WIDTH / 2)
-			#	cellLabel.setColor(COLORS.CellLabels[numMinedNeighbors - 1])
+			#	cellLabel.setColor(ms.COLORS.CellLabels[numMinedNeighbors - 1])
 			#	cellLayer.addChild cellLabel
+	
+	_cellTouchedIndices: (loc) ->
+		blockWidth = ms.CELL_WIDTH + ms.BORDER_WIDTH
+		i = Math.floor(loc.y / blockWidth)
+		j = Math.floor(loc.x / blockWidth)
+		if i >= @boardLayer.height or j >= @boardLayer.width
+			return null
+		return new cc.Point(i, j)
 
-@CCMinesweeperCell = cc.LayerColor.extend {
+ms.CCMinesweeperCell = cc.LayerColor.extend {
 	ctor: (width, height)->
 		@_super()
 		@width = width
 		@height = height
 	init: ()->
-		@_super(COLORS.CellIdle, @width, @height)
+		@_super(ms.COLORS.CellIdle, @width, @height)
 }
 
-@CCMinesweeperBoardLayer = cc.Layer.extend {
+ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 	ctor: (width, height)->
 		@width = width
 		@height = height
+		@cursors = {}
 		@cellMap = {}
 		for i in [0..@height - 1] #initialize board
 			@cellMap[i] = {}
-		@cursor = cc.LayerColor.create()
+			
 	init: ()->
 		@_super()
 		@setMouseEnabled(true)
-		@background = cc.LayerColor.create(COLORS.Background, that.BORDER_WIDTH * (@width + 1) + (@width * that.CELL_WIDTH) , that.BORDER_WIDTH * (@height + 1) + (@height * that.CELL_WIDTH))
+		@background = cc.LayerColor.create(ms.COLORS.Background, ms.BORDER_WIDTH * (@width + 1) + (@width * ms.CELL_WIDTH) , ms.BORDER_WIDTH * (@height + 1) + (@height * ms.CELL_WIDTH))
 		@background.setAnchorPoint(new cc.Point(0, 0))
 		@addChild @background
 	
 		for i in [0..@height - 1]
 			for j in [0..@width - 1]
-				minesweeperCellLayerColor = new CCMinesweeperCell(that.CELL_WIDTH, that.CELL_WIDTH)
+				minesweeperCellLayerColor = new ms.CCMinesweeperCell(ms.CELL_WIDTH, ms.CELL_WIDTH)
 				minesweeperCellLayerColor.init()
 				minesweeperCellLayerColor.setAnchorPoint(-.5, -.5)
-				minesweeperCellLayerColor.setPosition((that.CELL_WIDTH + that.BORDER_WIDTH) * j + that.BORDER_WIDTH, (that.CELL_WIDTH + that.BORDER_WIDTH) * i + that.BORDER_WIDTH)
+				minesweeperCellLayerColor.setPosition((ms.CELL_WIDTH + ms.BORDER_WIDTH) * j + ms.BORDER_WIDTH, (ms.CELL_WIDTH + ms.BORDER_WIDTH) * i + ms.BORDER_WIDTH)
 				@addChild minesweeperCellLayerColor, 1
 				@cellMap[i][j] = minesweeperCellLayerColor
 				
-		@cursor.setPosition(-99999, -99999)
-		@cursor.init(COLORS.Cursor.Up, that.CELL_WIDTH, that.CELL_WIDTH)
-		@addChild @cursor, 5
+		#@cursor.setPosition(-99999, -99999)
+		#@cursor.init(ms.COLORS.Cursor.Up, that.CELL_WIDTH, that.CELL_WIDTH)
+		#@addChild @cursor, 5
+	
+	displayCursor: (i, j, id, color)->
+		cursor = @cursors[id]
+		if not cursor?
+			cursor = cc.LayerColor.create()
+			cursor.init(color, ms.CELL_WIDTH, ms.CELL_WIDTH)
+			@cursors[id] = cursor
+			@addChild cursor, 2
+		cursor.setPosition(@get(i, j).getPosition())
+		cursor.setColor(color)
 	
 	displayMined: (i, j)->
 		cellLayer = @get(i,j)
 		if not cellLayer?
 			return
-		cellLabel = cc.LabelTTF.create("X", "Arial", cc.size(that.CELL_WIDTH, that.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
-		cellLabel.setPosition(that.CELL_WIDTH / 2, that.CELL_WIDTH / 2)
+		cellLabel = cc.LabelTTF.create("X", "Arial", cc.size(ms.CELL_WIDTH, ms.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
+		cellLabel.setPosition(ms.CELL_WIDTH / 2, ms.CELL_WIDTH / 2)
 		cellLabel.setColor(new cc.Color4B(0, 0, 0, 255))
 		cellLayer.addChild cellLabel
 		#mineSprite = cc.Sprite.create("/Content/mine.png");
@@ -106,52 +198,38 @@ class @MinesweeperController
 		cellLayer = @get(i, j)
 		if not cellLayer?
 			return
-		cellLayer.setColor(COLORS.CellUncovered)
+		cellLayer.setColor(ms.COLORS.CellUncovered)
 		if numMinedNeighbors > 0
 			#cellLabel = cc.LabelBMFont.create(numMinedNeighbors.toString(), "/Content/arial16.fnt", CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
-			cellLabel = cc.LabelTTF.create(numMinedNeighbors.toString(), "Arial", cc.size(that.CELL_WIDTH, that.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
-			cellLabel.setPosition(that.CELL_WIDTH / 2, that.CELL_WIDTH / 2)
-			cellLabel.setColor(COLORS.CellLabels[numMinedNeighbors - 1])
+			cellLabel = cc.LabelTTF.create(numMinedNeighbors.toString(), "Arial", cc.size(ms.CELL_WIDTH, ms.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
+			cellLabel.setPosition(ms.CELL_WIDTH / 2, ms.CELL_WIDTH / 2)
+			cellLabel.setColor(ms.COLORS.CellLabels[numMinedNeighbors - 1])
 			cellLayer.addChild cellLabel
 
 	get: (i, j)->
 		return @cellMap[i][j]
 
-	highlightCell: (i, j, color)->
-		
 	#Highlight cell on mouseover
 	onMouseMoved: (e)->
-		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
-		if not cellTouchedIndices?
-			return
-		cellTouched = @cellMap[cellTouchedIndices.x][cellTouchedIndices.y]
-		@cursor.setPosition(cellTouched.getPosition())
+		ms.controller.handleMouseMoved(e)
+		
+	onMouseUp: (e)->
+		ms.controller.handleMouseUp(e)
 	
-	
+	onMouseDown:(e)->	
+		ms.controller.handleMouseDown(e)
+		
+	onMouseDragged: (e)->
+		@onMouseDown(e)
+		
+		
 	_cellTouchedIndices: (loc) ->
-		blockWidth = that.CELL_WIDTH + that.BORDER_WIDTH
+		blockWidth = ms.CELL_WIDTH + ms.BORDER_WIDTH
 		i = Math.floor(loc.y / blockWidth)
 		j = Math.floor(loc.x / blockWidth)
 		if i >= @height or j >= @width
 			return null
 		return new cc.Point(i, j)
-		
-	onMouseUp: (e)->
-		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
-		that.controller.uncover(cellTouchedIndices.x, cellTouchedIndices.y)
-		@cursor.setColor(COLORS.Cursor.Up)
-	
-	onMouseDown:(e)->	
-		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
-		if not cellTouchedIndices?
-			return
-		console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)	
-		cellTouched = @cellMap[cellTouchedIndices.x][cellTouchedIndices.y]
-		@cursor.setColor(COLORS.Cursor.Down)
-		
-	onMouseDragged: (e)->
-		@onMouseMoved(e)
-		@onMouseDown(e)
 }
 
 

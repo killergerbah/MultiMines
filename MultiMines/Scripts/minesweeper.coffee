@@ -1,26 +1,28 @@
-﻿@CELL_TYPE = {
+﻿ms = this.ms ? (this.ms = {})
+
+ms.CELL_TYPE = {
 	Safe: 0,
 	Mined: 1
 }
 
-@CELL_STATUS = {
+ms.CELL_STATUS = {
 	Unflagged: 0,
 	Flagged: 1,
 	Uncovered: 2
 }
 
-class @Minesweeper
+class ms.Minesweeper
 	constructor: (id, board, players) ->
 		@id = id
 		@state = new MinesweeperState board
 		@players = players
 
-class @MinesweeperState
+class ms.MinesweeperState
 	constructor: (board) ->
 		@id = 0
 		@board = board
 		
-class @MinesweeperBoard
+class ms.MinesweeperBoard
 	_board = null
 	_minedNeighborsCache = {}
 	
@@ -42,7 +44,7 @@ class @MinesweeperBoard
 		if cached?
 			return cached
 		neighbors = this.neighbors(x, y)
-		return ( neighbor for neighbor in neighbors when neighbor.Type == CELL_TYPE.Mined ).length
+		return ( neighbor for neighbor in neighbors when neighbor.Type == ms.CELL_TYPE.Mined ).length
 	
 	get: (x, y) ->
 		return _board[x+1][y+1]
@@ -61,19 +63,19 @@ class @MinesweeperBoard
 	
 	uncover: (x, y) ->
 		cell = this.get(x, y)
-		if cell.Type == CELL_TYPE.Mined
-			cell.Status = CELL_STATUS.Uncovered
+		if cell.Type == ms.CELL_TYPE.Mined
+			cell.Status = ms.CELL_STATUS.Uncovered
 			return [ cell ]
 		uncovered = []
 		queue = [ cell ]
 		while queue.length > 0
 			cell = queue.pop()
 			neighbors = this.neighbors(cell.X, cell.Y)
-			if cell.Status == CELL_STATUS.Uncovered or cell.Status == CELL_STATUS.Flagged
+			if cell.Status == ms.CELL_STATUS.Uncovered or cell.Status == ms.CELL_STATUS.Flagged
 				continue
-			cell.Status = CELL_STATUS.Uncovered
+			cell.Status = ms.CELL_STATUS.Uncovered
 			uncovered.push(cell)
-			mined = ( neighbor for neighbor in neighbors when neighbor.Type is CELL_TYPE.Mined )
+			mined = ( neighbor for neighbor in neighbors when neighbor.Type is ms.CELL_TYPE.Mined )
 			numMinedNeighbors = mined.length
 			this._cacheMinedNeighbors(cell.X, cell.Y, numMinedNeighbors)
 			if numMinedNeighbors == 0
