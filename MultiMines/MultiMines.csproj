@@ -212,24 +212,24 @@
     <Content Include="Content\arial16.fnt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="Scripts\minesweeper_cocos2d.coffee">
+    <Content Include="Scripts\minesweeper_cocos2d.coffee">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <Content Include="Scripts\cocos2d\cocos2d\.DS_Store" />
     <Content Include="Scripts\cocos2d\lib\.DS_Store" />
     <None Include="Scripts\jquery-1.6.4-vsdoc.js" />
-    <None Include="Scripts\minesweeper.coffee">
+    <Content Include="Scripts\minesweeper.coffee">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <Content Include="Scripts\minesweeper_resources.coffee">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="Scripts\minesweeper_view.coffee">
+    <Content Include="Scripts\minesweeper_view.coffee">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Scripts\minesweeper_game.combine">
+    </Content>
+    <Content Include="Scripts\minesweeper_game.combine">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <Content Include="Scripts\cocos2d\box2d\box2d.js" />
     <Content Include="Scripts\cocos2d\chipmunk\chipmunk.js" />
     <Content Include="Scripts\cocos2d\cocos2d\actions\CCAction.js" />
@@ -427,9 +427,9 @@
     <Content Include="Scripts\cocos2d\extensions\PluginX\samples\HelloSocial\src\MySocialManager.js" />
     <Content Include="Scripts\cocos2d\extensions\PluginX\samples\HelloSocial\src\resource.js" />
     <Content Include="Scripts\cocos2d\lib\Cocos2d-html5-v2.1.5.min.js" />
-    <None Include="Scripts\main.coffee">
+    <Content Include="Scripts\main.coffee">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <Content Include="Scripts\jquery-1.6.4.js" />
     <Content Include="Scripts\jquery-1.6.4.min.js" />
     <Content Include="Scripts\jquery.signalR-1.1.3.js" />
