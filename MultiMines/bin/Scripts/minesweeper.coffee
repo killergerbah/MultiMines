@@ -73,6 +73,7 @@ class ms.MinesweeperBoard
 		cell = this.get(x, y)
 		if cell.Type == ms.CELL_TYPE.Mined
 			cell.Status = ms.CELL_STATUS.Uncovered
+			cell.OwnerId = ms.myUserId
 			return [ cell ]
 		uncovered = []
 		queue = [ cell ]
@@ -82,6 +83,7 @@ class ms.MinesweeperBoard
 			if cell.Status == ms.CELL_STATUS.Uncovered or cell.Status == ms.CELL_STATUS.Flagged
 				continue
 			cell.Status = ms.CELL_STATUS.Uncovered
+			cell.OwnerId = ms.myUserId
 			uncovered.push(cell)
 			mined = ( neighbor for neighbor in neighbors when neighbor.Type is ms.CELL_TYPE.Mined )
 			numMinedNeighbors = mined.length

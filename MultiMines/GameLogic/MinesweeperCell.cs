@@ -20,6 +20,8 @@ namespace MultiMines.GameLogic
 
     public class MinesweeperCell : ICloneable, IEquatable<MinesweeperCell>
     {
+        public int? OwnerId { get; set; }
+
         public CellType Type { get; set; }
 
         public CellStatus Status { get; set; }
@@ -27,7 +29,7 @@ namespace MultiMines.GameLogic
         public int X { get; private set; }
 
         public int Y { get; private set; }
-
+        
         public MinesweeperCell(int x, int y, CellType type)
         {
             X = x;
@@ -44,8 +46,15 @@ namespace MultiMines.GameLogic
             Status = status;
         }
 
-        public void Uncover()
+        public MinesweeperCell(int x, int y, CellType type, CellStatus status, int ownerId) :
+            this(x, y, type, status)
         {
+            OwnerId = ownerId;
+        }
+
+        public void Uncover(int ownerId)
+        {
+            OwnerId = ownerId;
             Status = CellStatus.Uncovered;
         }
 

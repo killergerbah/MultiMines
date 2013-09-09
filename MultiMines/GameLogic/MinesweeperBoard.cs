@@ -80,12 +80,12 @@ namespace MultiMines.GameLogic
         }
 
         //Returns true if cell at position i, j is a mine
-        public bool Uncover(int i, int j)
+        public bool Uncover(int i, int j, int userId)
         {
             var cell = this[i, j];
             if (cell.Type == CellType.Mined)
             {
-                cell.Uncover();
+                cell.Uncover(userId);
                 return true;
             }
 
@@ -100,7 +100,7 @@ namespace MultiMines.GameLogic
                     continue;
                 }
 
-                cell.Uncover();
+                cell.Uncover(userId);
                 var neighbors = _neighbors(cell.X, cell.Y);
                 if (!neighbors.Where((x) =>
                 {

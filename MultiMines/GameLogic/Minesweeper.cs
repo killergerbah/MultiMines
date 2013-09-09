@@ -14,9 +14,9 @@ namespace MultiMines.GameLogic
             Board = new MinesweeperBoard(width, height, numMines);
         }
 
-        public void Uncover(int i, int j)
+        public void Uncover(int i, int j, int userId)
         {
-            Board.Uncover(i, j);
+            Board.Uncover(i, j, userId);
         }
     }
 }

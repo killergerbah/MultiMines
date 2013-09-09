@@ -62,6 +62,7 @@ ms.minesweeperHub.client.sync = (serverBoard)->
 	if not ms.controller?
 		return
 	serverBoard = new ms.MinesweeperBoard(JSON.parse(serverBoard))
+	console.log "?"
 	ms.controller.sync(serverBoard)
 	
 ms.minesweeperHub.client.displayUserCursor = (i, j, userId)->

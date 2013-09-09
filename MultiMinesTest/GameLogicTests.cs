@@ -51,7 +51,7 @@ namespace MultiMinesTest
         {
             int width = 50, height = 50;
             var board = new MinesweeperBoard(width, height, 0);
-            board.Uncover(0, 0);
+            board.Uncover(0, 0, 0);
 
             for (var i = 0; i < width; i++)
             {
@@ -71,7 +71,7 @@ namespace MultiMinesTest
             int width = 50, height = 50;
             var board = new MinesweeperBoard(width, height, 0);
             board[0, 0].Type = CellType.Mined;
-            board.Uncover(25, 25);
+            board.Uncover(25, 25, 0);
             var cascaded = 0;
             for (var i = 0; i < width; i++)
             {

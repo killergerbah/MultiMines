@@ -6,7 +6,10 @@ ms.MINE_WIDTH = 50
 ms.COLORS = {
 	CellActive: new cc.Color4B(230, 230, 230, 255)
 	CellIdle: new cc.Color4B(235, 235, 235, 255)
-	CellUncovered: new cc.Color4B(250, 250, 250)
+	CellUncovered: {
+		Mine: new cc.Color4B(210, 210, 255, 255)
+		Theirs: new cc.Color4B(255, 210, 210, 255)
+	}
 	Background: new cc.Color4B(255, 255, 255, 255)
 	User: {
 			Mine: {
@@ -124,7 +127,8 @@ class ms.MinesweeperController
 				@boardLayer.displayMined(cell.X, cell.Y)
 				return
 			numMinedNeighbors = @game.board.getNumMinedNeighbors(cell.X, cell.Y)
-			@boardLayer.displayNumMinedNeighbors(cell.X, cell.Y, numMinedNeighbors)
+			color = if cell.OwnerId == ms.myUserId then ms.COLORS.CellUncovered.Mine else ms.COLORS.CellUncovered.Theirs
+			@boardLayer.displayNumMinedNeighbors(cell.X, cell.Y, numMinedNeighbors, color)
 			#	cellLabel = cc.LabelTTF.create(numMinedNeighbors.toString(), 'Tahoma', 16, cc.size(CELL_WIDTH, CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
 			#	cellLabel = cc.LabelBMFont.create(numMinedNeighbors.toString(), "/Content/arial16.fnt", CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
 			#	cellLabel.setPosition(CELL_WIDTH / 2, CELL_WIDTH / 2)
@@ -202,11 +206,11 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		#mineSprite.setPosition(that.CELL_WIDTH / 2, that.CELL_WIDTH / 2)
 		#cellLayer.addChild mineSprite
 		
-	displayNumMinedNeighbors: (i, j, numMinedNeighbors)->
+	displayNumMinedNeighbors: (i, j, numMinedNeighbors, color)->
 		cellLayer = @get(i, j)
 		if not cellLayer?
 			return
-		cellLayer.setColor(ms.COLORS.CellUncovered)
+		cellLayer.setColor(color)
 		if cellLayer.getChildren().length > 0 #quit if label already exists
 			return
 		if numMinedNeighbors > 0

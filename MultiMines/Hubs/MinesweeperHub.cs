@@ -75,9 +75,9 @@ namespace MultiMines.Hubs
             Clients.Caller.SetBoard(JsonConvert.SerializeObject(Game.Board));
         }
 
-        public void Uncover(int i, int j)
+        public void Uncover(int i, int j, int userId)
         {
-            Game.Uncover(i, j);
+            Game.Uncover(i, j, userId);
             _broadcaster.UpdateState();
             //Clients.Others.Uncover(i, j);
         }
