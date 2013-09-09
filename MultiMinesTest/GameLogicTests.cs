@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MultiMines.GameLogic;
+using System.Diagnostics;
 
 namespace MultiMinesTest
 {
@@ -11,10 +12,7 @@ namespace MultiMinesTest
         public void MinesweeperBoard_WithCorrectNumberOfMines_InitializesBoard()
         {
             int width = 50, height = 50, numMines = 100;
-            User p1 = new User(1, "p1");
-            User p2 = new User(2, "p2");
-            User[] players = new User[] { p1, p2 };
-            Minesweeper game = new Minesweeper(1, width, height, numMines, players);
+            Minesweeper game = new Minesweeper(width, height, numMines);
             var board = game.Board;
             var actualNumMines = 0;
             for (var i = 0; i < width; i++)
@@ -28,9 +26,9 @@ namespace MultiMinesTest
                 }
             }
             Assert.AreEqual(numMines, actualNumMines, "Wrong number of mines");
-                    
+
         }
-        
+
         [TestMethod]
         public void MinesweeperBoard_WholeBoardUncovered_WithNoMines()
         {
@@ -84,6 +82,27 @@ namespace MultiMinesTest
                 }
             }
             Assert.AreEqual(width * height - 1, cascaded, "Wrong number of cascaded cells");
+        }
+
+
+        [TestMethod]
+        public void MinesweeperBoard_Clone_PerformsDeepCopy()
+        {
+            int width = 50, height = 50, numMines = 10;
+            var board = new MinesweeperBoard(width, height, numMines);
+            var clone = (MinesweeperBoard) board.Clone();
+            Assert.AreNotSame(board, clone, "Clone cannot produce same object reference");
+            for (var i = 0; i < height; i++)
+            {
+                for (var j = 0; j < width; j++)
+                {
+                    var original = board[i, j];
+                    var copied = clone[i, j];
+                    //Debug.WriteLine(original.Equals(copied) + " " + original.X + " " + original.Y + " " + original.Type + " " + original.Status + " " + copied.X + " " + copied.Y + " " + copied.Type + " " + copied.Status); 
+                    Assert.IsTrue(board[i, j].Equals(clone[i, j]));
+                    Assert.AreNotSame(board[i, j], clone[i, j], "Clone copied a cell object reference");
+                }
+            }
         }
     }
 }

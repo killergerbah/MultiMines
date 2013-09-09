@@ -26,3 +26,9 @@ C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Content\Nimbus.fnt
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Content\arial16.fnt
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\MultiMinesTest.dll.config
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Scripts\minesweeper_cocos2d.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Scripts\minesweeper.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Scripts\minesweeper_resources.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Scripts\minesweeper_view.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Scripts\minesweeper_game.combine
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMinesTest\bin\Debug\Scripts\main.coffee

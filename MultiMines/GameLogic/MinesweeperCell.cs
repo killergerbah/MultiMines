@@ -18,7 +18,7 @@ namespace MultiMines.GameLogic
         Uncovered
     }
 
-    public class MinesweeperCell
+    public class MinesweeperCell : ICloneable, IEquatable<MinesweeperCell>
     {
         public CellType Type { get; set; }
 
@@ -36,9 +36,31 @@ namespace MultiMines.GameLogic
             Status = CellStatus.Unflagged;
         }
 
+        public MinesweeperCell(int x, int y, CellType type, CellStatus status)
+        {
+            X = x;
+            Y = y;
+            Type = type;
+            Status = status;
+        }
+
         public void Uncover()
         {
             Status = CellStatus.Uncovered;
+        }
+
+        public object Clone()
+        {
+            return new MinesweeperCell(X, Y, Type, Status);
+        }
+
+        public bool Equals(MinesweeperCell other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            return X == other.X && Y == other.Y && Type == other.Type && Status == other.Status;
         }
     }
 }

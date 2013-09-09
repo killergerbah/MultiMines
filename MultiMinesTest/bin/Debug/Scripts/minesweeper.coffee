@@ -12,24 +12,16 @@ ms.CELL_STATUS = {
 }
 
 class ms.Minesweeper
-	constructor: (board) ->
-		@board = board
-		@eventJournal = []
-	
-	recordEvent: (callbackKey, args)->
-		@eventJournal.push({
-			callbackKey: callbackKey,
-			args: args
-		})
-	
-	sync: (serverBoard)->
-		console.log("playing back " + @eventJournal.length + " events")
-		console.log(serverBoard)
-		@board = serverBoard;
-		while @eventJournal.length > 0
-			event = @eventJournal.pop()
-			serverBoard[event.callbackKey].apply(serverBoard, event.args)
+	constructor: (id, board, players) ->
+		@id = id
+		@state = new MinesweeperState board
+		@players = players
 
+class ms.MinesweeperState
+	constructor: (board) ->
+		@id = 0
+		@board = board
+		
 class ms.MinesweeperBoard
 	_board = null
 	_minedNeighborsCache = {}

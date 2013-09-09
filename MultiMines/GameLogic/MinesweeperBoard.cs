@@ -7,7 +7,7 @@ using System.Web;
 namespace MultiMines.GameLogic
 {
     [DataContract]
-    public class MinesweeperBoard
+    public class MinesweeperBoard : ICloneable
     {
         [DataMember]
         private MinesweeperCell[,] _board;
@@ -20,6 +20,16 @@ namespace MultiMines.GameLogic
 
         [DataMember]
         public int NumMines { get; private set; }
+
+        public MinesweeperBoard(int width, int height)
+        {
+            Width = width;
+            Height = height;
+            _board = new MinesweeperCell[Height + 2, Width + 2];
+            NumMines = 0;
+
+            _populateBoard();
+        }
 
         public MinesweeperBoard(int width, int height, int numMines)
         {
@@ -119,6 +129,19 @@ namespace MultiMines.GameLogic
                 this[i, j + 1],
                 this[i + 1,j + 1]
             }.Where((x) => { return x != null; }).ToList();
+        }
+
+        public object Clone()
+        {
+            var clone = new MinesweeperBoard(Width, Height);
+            for (var i = 0; i < Height; i++)
+            {
+                for (var j = 0; j < Width; j++)
+                {
+                    clone[i, j] = (MinesweeperCell) this[i, j].Clone();
+                }
+            }
+            return clone;
         }
     }
 }

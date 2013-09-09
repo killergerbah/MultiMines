@@ -60,26 +60,20 @@ class ms.MinesweeperConnection
 			
 	
 class ms.MinesweeperController
-	constructor: (@game, @boardLayer, @connection)->
+	constructor: (@board, @boardLayer, @connection)->
 		@myCurrentColor = ms.COLORS.User.Mine.Up
 		@myLastPosition = null
-		
-	displayBoard: ()->
-		for i in [0..@game.board.height - 1]
-			for j in [0..@game.board.width - 1]
-				@_displayCellState(@game.board.get(i, j))
+	init: ()->
+		for i in [0..@board.height - 1]
+			for j in [0..@board.width - 1]
+				@_displayCellState(@board.get(i, j))
 				
-	sync: (serverBoard)->
-		@game.sync(serverBoard)
-		@displayBoard()
-		
 	uncover: (i, j)->
 		@connection.uncover(i, j)
 		@uncoverRemotely(i, j)
-		@game.recordEvent("uncover", [i, j])
 	
 	uncoverRemotely: (i, j)->
-		uncovered = @game.board.uncover(i, j)
+		uncovered = @board.uncover(i, j)
 		for cell in uncovered
 			@_displayCellState(cell)
 	
@@ -113,7 +107,7 @@ class ms.MinesweeperController
 			return
 		console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)	
 		@myCurrentColor = ms.COLORS.User.Mine.Down
-		@displayUserCursor(cellTouchedIndices.x, cellTouchedIndices.y, ms.myUserId, @myCurrentColor)
+		@displayUserCursor(cellTouchedIndices.x, cellTouchedIndices.y, ms.myUserId, @currentColor)
 	
 	displayUserCursor: (i, j, userId, color)->
 		@boardLayer.displayCursor(i, j, userId, color)
@@ -123,7 +117,7 @@ class ms.MinesweeperController
 			if cell.Type == ms.CELL_TYPE.Mined 
 				@boardLayer.displayMined(cell.X, cell.Y)
 				return
-			numMinedNeighbors = @game.board.getNumMinedNeighbors(cell.X, cell.Y)
+			numMinedNeighbors = @board.getNumMinedNeighbors(cell.X, cell.Y)
 			@boardLayer.displayNumMinedNeighbors(cell.X, cell.Y, numMinedNeighbors)
 			#	cellLabel = cc.LabelTTF.create(numMinedNeighbors.toString(), 'Tahoma', 16, cc.size(CELL_WIDTH, CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
 			#	cellLabel = cc.LabelBMFont.create(numMinedNeighbors.toString(), "/Content/arial16.fnt", CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
@@ -191,8 +185,6 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		cellLayer = @get(i,j)
 		if not cellLayer?
 			return
-		if cellLayer.getChildren().length > 0 #quit if label already exists
-			return
 		cellLabel = cc.LabelTTF.create("X", "Arial", cc.size(ms.CELL_WIDTH, ms.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
 		cellLabel.setPosition(ms.CELL_WIDTH / 2, ms.CELL_WIDTH / 2)
 		cellLabel.setColor(new cc.Color4B(0, 0, 0, 255))
@@ -207,8 +199,6 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		if not cellLayer?
 			return
 		cellLayer.setColor(ms.COLORS.CellUncovered)
-		if cellLayer.getChildren().length > 0 #quit if label already exists
-			return
 		if numMinedNeighbors > 0
 			#cellLabel = cc.LabelBMFont.create(numMinedNeighbors.toString(), "/Content/arial16.fnt", CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
 			cellLabel = cc.LabelTTF.create(numMinedNeighbors.toString(), "Arial", cc.size(ms.CELL_WIDTH, ms.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)

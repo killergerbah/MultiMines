@@ -68,3 +68,9 @@ C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Web
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\WebMatrix.WebData.xml
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Org.Mentalis.Security.Cryptography.xml
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Mono.Math.xml
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\minesweeper_cocos2d.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\minesweeper.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\minesweeper_resources.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\minesweeper_view.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\minesweeper_game.combine
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\main.coffee

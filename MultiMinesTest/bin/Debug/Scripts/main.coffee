@@ -39,15 +39,12 @@ ms.minesweeperHub.client.setBoard = (serializedBoard)->
 			layer = new ms.CCMinesweeperBoardLayer(ms.board.width, ms.board.height)
 			layer.init()
 			@addChild layer
-			ms.game = new ms.Minesweeper(ms.board)
-			ms.controller = new ms.MinesweeperController(ms.game, layer, ms.connection)
-			ms.controller.displayBoard()
+			ms.controller = new ms.MinesweeperController(ms.board, layer, ms.connection)
+			ms.controller.init()
 	}
 	minesweeperApp = new cocos2dApp(ms.minesweeperScene)
 
 ms.minesweeperHub.client.uncover = (i, j)->
-	if not ms.controller?
-		return
 	ms.controller.uncoverRemotely(i, j)
 
 ms.minesweeperHub.client.refresh = ()->
@@ -57,16 +54,8 @@ ms.minesweeperHub.client.setMyUserId = (userId)->
 	if not userId?
 		throw "You need to log-in before playing!"
 	ms.myUserId = userId
-
-ms.minesweeperHub.client.sync = (serverBoard)->
-	if not ms.controller?
-		return
-	serverBoard = new ms.MinesweeperBoard(JSON.parse(serverBoard))
-	ms.controller.sync(serverBoard)
 	
 ms.minesweeperHub.client.displayUserCursor = (i, j, userId)->
-	if not ms.controller?
-		return
 	if userId == ms.myUserId
 		ms.controller.displayUserCursor(i, j, userId, ms.COLORS.User.Mine.Up)
 	else
