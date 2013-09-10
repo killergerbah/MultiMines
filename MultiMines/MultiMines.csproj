@@ -203,6 +203,8 @@
     <Content Include="Content\arial16.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\cursor_blue.png" />
+    <Content Include="Content\cursor_red.png" />
     <Content Include="Content\flag_blue.png" />
     <Content Include="Content\flag_red.png" />
     <Content Include="Content\mine.png" />
