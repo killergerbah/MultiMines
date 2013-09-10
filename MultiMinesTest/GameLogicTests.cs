@@ -38,7 +38,7 @@ namespace MultiMinesTest
             {
                 for (var j = 0; j < height; j++)
                 {
-                    if (board[i, j].Status != CellStatus.Unflagged || board[i, j].Status == CellStatus.Flagged)
+                    if (board[i, j].Status == CellStatus.Uncovered)
                     {
                         Assert.Fail("Board with no mines has invalid cell status");
                     }
@@ -57,7 +57,7 @@ namespace MultiMinesTest
             {
                 for (var j = 0; j < height; j++)
                 {
-                    if (board[i, j].Status == CellStatus.Unflagged || board[i, j].Status == CellStatus.Flagged)
+                    if (board[i, j].Status == CellStatus.Covered)
                     {
                         Assert.Fail("Board with no mines has invalid cell status");
                     }
