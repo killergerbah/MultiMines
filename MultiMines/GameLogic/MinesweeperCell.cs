@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Web;
 
 namespace MultiMines.GameLogic
@@ -13,29 +14,38 @@ namespace MultiMines.GameLogic
 
     public enum CellStatus
     {
-        Unflagged,
-        Flagged,
+        Covered,
         Uncovered
     }
 
+    [DataContract]
     public class MinesweeperCell : ICloneable, IEquatable<MinesweeperCell>
     {
+        [DataMember]
         public int? OwnerId { get; set; }
 
+        [DataMember]
+        public HashSet<int> FlagOwnerIds { get; set; } //using list because set is not serializable
+
+        [DataMember]
         public CellType Type { get; set; }
 
+        [DataMember]
         public CellStatus Status { get; set; }
 
+        [DataMember]
         public int X { get; private set; }
 
+        [DataMember]
         public int Y { get; private set; }
-        
+
         public MinesweeperCell(int x, int y, CellType type)
         {
             X = x;
             Y = y;
             Type = type;
-            Status = CellStatus.Unflagged;
+            Status = CellStatus.Covered;
+            FlagOwnerIds = new HashSet<int>();
         }
 
         public MinesweeperCell(int x, int y, CellType type, CellStatus status)
@@ -44,6 +54,7 @@ namespace MultiMines.GameLogic
             Y = y;
             Type = type;
             Status = status;
+            FlagOwnerIds = new HashSet<int>();
         }
 
         public MinesweeperCell(int x, int y, CellType type, CellStatus status, int ownerId) :
@@ -56,6 +67,17 @@ namespace MultiMines.GameLogic
         {
             OwnerId = ownerId;
             Status = CellStatus.Uncovered;
+        }
+
+        public void Flag(int ownerId)
+        {
+            FlagOwnerIds.Add(ownerId);
+
+        }
+
+        public void Unflag(int ownerId)
+        {
+            FlagOwnerIds.Remove(ownerId);
         }
 
         public object Clone()

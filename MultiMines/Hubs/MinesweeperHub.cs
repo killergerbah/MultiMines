@@ -82,6 +82,18 @@ namespace MultiMines.Hubs
             //Clients.Others.Uncover(i, j);
         }
 
+        public void Flag(int i, int j, int userId)
+        {
+            Game.Flag(i, j, userId);
+            _broadcaster.UpdateState();
+        }
+
+        public void Unflag(int i, int j, int userId)
+        {
+            Game.Unflag(i, j, userId);
+            _broadcaster.UpdateState();
+        }
+
         public void ResetBoard()
         {
             Game = new Minesweeper(30, 16, 99);

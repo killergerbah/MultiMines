@@ -94,8 +94,7 @@ namespace MultiMines.GameLogic
             while (toCascade.Any())
             {
                 cell = toCascade.Dequeue();
-                if (cell.Status == CellStatus.Uncovered ||
-                    cell.Status == CellStatus.Flagged)
+                if (cell.Status == CellStatus.Uncovered || cell.FlagOwnerIds.Any()) //skip if flagged
                 {
                     continue;
                 }
@@ -114,6 +113,16 @@ namespace MultiMines.GameLogic
                 }
             }
             return false;
+        }
+
+        public void Flag(int i, int j, int userId)
+        {
+            this[i, j].Flag(userId);   
+        }
+
+        public void Unflag(int i, int j, int userId)
+        {
+            this[i, j].Unflag(userId);
         }
 
         private List<MinesweeperCell> _neighbors(int i, int j)

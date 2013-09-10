@@ -6,9 +6,8 @@ ms.CELL_TYPE = {
 }
 
 ms.CELL_STATUS = {
-	Unflagged: 0,
-	Flagged: 1,
-	Uncovered: 2
+	Covered: 0	
+	Uncovered: 1
 }
 
 class ms.Minesweeper
@@ -69,8 +68,20 @@ class ms.MinesweeperBoard
 			this.get(x + 1, y + 1)
 		] when neighbor isnt null)
 	
-	uncover: (x, y) ->
-		cell = this.get(x, y)
+	flag: (x, y)->
+		cell = @get(x, y)
+		if cell.FlagOwnerIds.indexOf(ms.myUserId) >= 0
+			return
+		cell.FlagOwnerIds.push(ms.myUserId)
+	
+	unflag: (x, y)->
+		cell = @get(x, y)
+		index = cell.FlagOwnerIds.indexOf(ms.myUserId)
+		if index >= 0
+			cell.FlagOwnerIds.splice(index, 1)
+	
+	uncover: (x, y)->
+		cell = @get(x, y)
 		if cell.Type == ms.CELL_TYPE.Mined
 			cell.Status = ms.CELL_STATUS.Uncovered
 			cell.OwnerId = ms.myUserId
@@ -80,7 +91,7 @@ class ms.MinesweeperBoard
 		while queue.length > 0
 			cell = queue.pop()
 			neighbors = this.neighbors(cell.X, cell.Y)
-			if cell.Status == ms.CELL_STATUS.Uncovered or cell.Status == ms.CELL_STATUS.Flagged
+			if cell.Status == ms.CELL_STATUS.Uncovered or cell.FlagOwnerIds.length > 0
 				continue
 			cell.Status = ms.CELL_STATUS.Uncovered
 			cell.OwnerId = ms.myUserId

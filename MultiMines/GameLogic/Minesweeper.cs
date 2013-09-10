@@ -18,5 +18,15 @@ namespace MultiMines.GameLogic
         {
             Board.Uncover(i, j, userId);
         }
+
+        public void Flag(int i, int j, int userId)
+        {
+            Board.Flag(i, j, userId);
+        }
+
+        public void Unflag(int i, int j, int userId)
+        {
+            Board.Unflag(i, j, userId);
+        }
     }
 }

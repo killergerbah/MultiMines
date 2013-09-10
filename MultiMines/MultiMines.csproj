@@ -203,6 +203,8 @@
     <Content Include="Content\arial16.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\flag_mine.png" />
+    <Content Include="Content\flag_theirs.png" />
     <Content Include="Content\mine.png" />
     <Content Include="Content\Stylesheets\minesweeper.css" />
     <Content Include="Global.asax" />

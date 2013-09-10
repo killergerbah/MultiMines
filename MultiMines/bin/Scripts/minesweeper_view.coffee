@@ -3,21 +3,25 @@
 ms.BORDER_WIDTH = 1
 ms.CELL_WIDTH = 20
 ms.MINE_WIDTH = 50
+ms.FLAG_WIDTH = 50
+ms.TAGS = {
+	Flag: 1
+}
 ms.COLORS = {
 	CellActive: new cc.Color4B(230, 230, 230, 255)
 	CellIdle: new cc.Color4B(235, 235, 235, 255)
 	CellUncovered: {
-		Mine: new cc.Color4B(210, 210, 255, 255)
-		Theirs: new cc.Color4B(255, 210, 210, 255)
+		Mine: new cc.Color4B(220, 220, 255, 255)
+		Theirs: new cc.Color4B(255, 220, 220, 255)
 	}
 	Background: new cc.Color4B(255, 255, 255, 255)
 	User: {
 			Mine: {
-				Up: new cc.Color4B(0, 0, 255, 40)
+				Up: new cc.Color4B(0, 0, 255, 30)
 				Down: new cc.Color4B(0, 0, 255, 100)
 			}
 			Theirs: {
-				Up: new cc.Color4B(255, 0, 0, 40)
+				Up: new cc.Color4B(255, 0, 0, 30)
 				Down: new cc.Color4B(255, 0, 0, 100)
 			}
 		}
@@ -43,24 +47,32 @@ class ms.MinesweeperConnection
 		})
 	
 	_updateInterval = ms.UPDATE_INTERVAL #default value
-		
+	_queueAvailable = true
 	_update = ()->
 		#console.log("something")
 		while _updateCallbacks.length > 0
 			callback = _updateCallbacks.pop()
 			callback.callback.apply(this, callback.args)
+		_queueAvailable = true
 		setTimeout(_update, _updateInterval)
 
 	constructor: (@minesweeperHub, @updateInterval)->
 		_updateInterval = @updateInterval
 		_update()
 		
-	uncover: (i, j)->
-		_queueCallback(@minesweeperHub.server.uncover, [i, j])
+	uncover: (i, j, userId)->
+		_queueCallback(@minesweeperHub.server.uncover, [i, j, userId])
 	
 	displayUserCursor: (i, j, userId)->
-		_queueCallback(@minesweeperHub.server.displayUserCursor, [i, j, userId])
-			
+		if _queueAvailable
+			_queueCallback(@minesweeperHub.server.displayUserCursor, [i, j, userId])
+		_queueAvailable = false
+		
+	flag: (i, j, userId)->
+		_queueCallback(@minesweeperHub.server.flag, [i, j, userId])
+	
+	unflag: (i, j, userId)->
+		_queueCallback(@minesweeperHub.server.unflag, [i, j, userId])	
 	
 class ms.MinesweeperController
 	constructor: (@game, @boardLayer, @connection)->
@@ -77,7 +89,7 @@ class ms.MinesweeperController
 		@displayBoard()
 		
 	uncover: (i, j)->
-		@connection.uncover(i, j)
+		@connection.uncover(i, j, ms.myUserId)
 		@uncoverRemotely(i, j)
 		@game.recordEvent("uncover", [i, j])
 	
@@ -117,6 +129,22 @@ class ms.MinesweeperController
 		console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)	
 		@myCurrentColor = ms.COLORS.User.Mine.Down
 		@displayUserCursor(cellTouchedIndices.x, cellTouchedIndices.y, ms.myUserId, @myCurrentColor)
+		
+	handleRightMouseDown: (e)->
+		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
+		if not cellTouchedIndices?
+			return
+		x = cellTouchedIndices.x
+		y = cellTouchedIndices.y
+		cell = @game.board.get(x, y)
+		if cell.Status != ms.CELL_STATUS.Uncovered
+			if cell.FlagOwnerIds.indexOf(ms.myUserId) >= 0
+				@connection.unflag(x, y, ms.myUserId) #unflag if already flagged
+				@game.board.unflag(x, y)
+			else
+				@connection.flag(cellTouchedIndices.x, cellTouchedIndices.y, ms.myUserId)
+				@game.board.flag(x, y)
+		@_displayCellState(cell)
 	
 	displayUserCursor: (i, j, userId, color)->
 		@boardLayer.displayCursor(i, j, userId, color)
@@ -134,6 +162,14 @@ class ms.MinesweeperController
 			#	cellLabel.setPosition(CELL_WIDTH / 2, CELL_WIDTH / 2)
 			#	cellLabel.setColor(ms.COLORS.CellLabels[numMinedNeighbors - 1])
 			#	cellLayer.addChild cellLabel
+		else #check for flags
+			if cell.FlagOwnerIds.length == 0
+				@boardLayer.removeFlag(cell.X, cell.Y)
+				return
+			if cell.FlagOwnerIds.indexOf(ms.myUserId) >= 0
+				@boardLayer.displayFlag(cell.X, cell.Y, true)
+			else
+				@boardLayer.displayFlag(cell.X, cell.Y, false) 
 	
 	_cellTouchedIndices: (loc) ->
 		blockWidth = ms.CELL_WIDTH + ms.BORDER_WIDTH
@@ -191,6 +227,30 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		cursor.setPosition(@get(i, j).getPosition())
 		cursor.setColor(color)
 	
+	removeFlag: (i, j)->
+		cellLayer = @get(i, j)
+		if not cellLayer?
+			return
+		cellLayer.removeAllChildren()
+	
+	displayFlag: (i, j, isMine)->
+		cellLayer = @get(i, j)
+		if not cellLayer?
+			return
+		cellLayer.removeAllChildren()
+		if isMine
+			spritePath = "/Content/flag_mine.png"
+			opacity = 255
+		else
+			spritePath = "/Content/flag_theirs.png"
+			opacity = 80
+		flagSprite = cc.Sprite.create(spritePath)
+		flagSprite.setScale(ms.CELL_WIDTH / ms.FLAG_WIDTH);
+		flagSprite.setOpacity(opacity)
+		flagSprite.setPosition(ms.CELL_WIDTH / 2, ms.CELL_WIDTH / 2)
+		cellLayer.addChild(flagSprite, ms.TAGS.Flag, ms.TAGS.Flag)
+		
+	
 	displayMined: (i, j)->
 		cellLayer = @get(i,j)
 		if not cellLayer?
@@ -235,6 +295,9 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		
 	onMouseDragged: (e)->
 		@onMouseDown(e)
+		
+	onRightMouseDown: (e)->
+		ms.controller.handleRightMouseDown(e)
 		
 		
 	_cellTouchedIndices: (loc) ->
