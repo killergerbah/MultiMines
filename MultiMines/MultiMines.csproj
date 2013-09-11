@@ -185,14 +185,11 @@
     <Compile Include="Controllers\SessionsController.cs" />
     <Compile Include="GameLogic\MinesweeperCell.cs" />
     <Compile Include="GameLogic\Minesweeper.cs" />
-    <Compile Include="GameLogic\IGame.cs" />
-    <Compile Include="GameLogic\MinesweeperMove.cs" />
-    <Compile Include="GameLogic\MinesweeperState.cs" />
+    <Compile Include="GameLogic\MinesweeperEvent.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="GameLogic\MinesweeperBoard.cs" />
-    <Compile Include="GameLogic\Player.cs" />
     <Compile Include="Hubs\MinesweeperHub.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

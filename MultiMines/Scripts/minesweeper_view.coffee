@@ -36,44 +36,6 @@ ms.COLORS = {
 							new cc.Color4B(119, 136, 153, 255) 
 							new cc.Color4B(0, 0, 0, 100)]
 }
-class ms.MinesweeperConnection
-	_updateCallbacks = []
-	
-	_registeredCallbacks = []
-	
-	_queueCallback = (callback, args)->
-		_updateCallbacks.push({
-			callback: callback,
-			args: args
-		})
-	
-	_updateInterval = ms.UPDATE_INTERVAL #default value
-	_queueAvailable = true
-	_update = ()->
-		#console.log("something")
-		while _updateCallbacks.length > 0
-			callback = _updateCallbacks.pop()
-			callback.callback.apply(this, callback.args)
-		_queueAvailable = true
-		setTimeout(_update, _updateInterval)
-
-	constructor: (@minesweeperHub, @updateInterval)->
-		_updateInterval = @updateInterval
-		_update()
-		
-	uncover: (i, j, userId)->
-		_queueCallback(@minesweeperHub.server.uncover, [i, j, userId])
-	
-	displayUserCursor: (i, j, userId)->
-		if _queueAvailable
-			_queueCallback(@minesweeperHub.server.displayUserCursor, [i, j, userId])
-		_queueAvailable = false
-		
-	flag: (i, j, userId)->
-		_queueCallback(@minesweeperHub.server.flag, [i, j, userId])
-	
-	unflag: (i, j, userId)->
-		_queueCallback(@minesweeperHub.server.unflag, [i, j, userId])	
 	
 class ms.MinesweeperController
 	_selected = []
@@ -86,27 +48,35 @@ class ms.MinesweeperController
 	_leftMouseWentUpTimeout = null
 	_rightMouseWentUpTimeout = null
 	
-	constructor: (@game, @boardLayer, @connection)->
+	constructor: (@game, @boardLayer)->
 		
 	displayBoard: ()->
 		for i in [0..@game.board.height - 1]
 			for j in [0..@game.board.width - 1]
 				@_displayCellState(@game.board.get(i, j))
 				
-	sync: (serverBoard)->
-		@game.sync(serverBoard)
+	sync: (serverBoard, serverEventJournal)->
+		@game.sync(serverBoard, serverEventJournal)
 		@displayBoard()
 		
 	uncover: (i, j)->
-		@connection.uncover(i, j, ms.myUserId)
-		@uncoverRemotely(i, j)
-		@game.recordEvent("uncover", [i, j])
-	
-	uncoverRemotely: (i, j)->
-		uncovered = @game.board.uncover(i, j)
+		uncovered = @game.uncover(i, j)
 		for cell in uncovered
 			@_displayCellState(cell)
-	
+			
+	flag: (i, j)->
+		@game.flag(i, j)
+		@_displayCellState(@game.get(i, j))
+		
+	unflag: (i, j)->
+		@game.unflag(i, j)
+		@_displayCellState(@game.get(i, j))
+		
+	specialUncover: (i, j)->
+		uncovered = @game.specialUncover(i, j)
+		for cell in uncovered
+			@_displayCellState(cell)
+			
 	handleMouseMoved: (e)->
 		#console.log "moved"
 		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
@@ -119,7 +89,7 @@ class ms.MinesweeperController
 		if _myLastPosition? and _myLastPosition.x == x and _myLastPosition.y == y
 			return
 		_myLastPosition = cellTouchedIndices;
-		@connection.displayUserCursor(x, y, ms.myUserId) 
+		@game.displayUserCursor(x, y) 
 		@displayUserCursor(x, y, ms.myUserId, _myCurrentColor)
 	
 	handleMouseUp: (e)->
@@ -154,7 +124,7 @@ class ms.MinesweeperController
 		console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)	
 		_myCurrentColor = ms.COLORS.User.Mine.Down
 		@displayUserCursor(x, y, ms.myUserId, _myCurrentColor)
-		@_select([ @game.board.get(x, y) ])
+		@_select([ @game.get(x, y) ])
 		
 	handleBothMouseDown: (e)->
 		console.log "other down"
@@ -164,9 +134,10 @@ class ms.MinesweeperController
 		x = cellTouchedIndices.x
 		y = cellTouchedIndices.y
 		@boardLayer.cursorToScale(3.1, ms.myUserId)
-		toSelect = @_expandableNeighbors(x, y)
+		neighbors = @game.board.neighbors(x ,y)
+		toSelect = (cell for cell in neighbors when cell.status is ms.CELL_STATUS.Covered and cell.flagOwnerIds.indexOf(ms.myUserId) < 0)
 		cell = @game.board.get(x, y)
-		if cell.Status == ms.CELL_STATUS.Covered and cell.FlagOwnerIds.indexOf(ms.myUserId) < 0
+		if cell.status == ms.CELL_STATUS.Covered and cell.flagOwnerIds.indexOf(ms.myUserId) < 0
 			toSelect.push(cell)
 		@_select(toSelect)
 		
@@ -182,13 +153,11 @@ class ms.MinesweeperController
 		x = cellTouchedIndices.x
 		y = cellTouchedIndices.y
 		cell = @game.board.get(x, y)
-		if cell.Status != ms.CELL_STATUS.Uncovered
-			if cell.FlagOwnerIds.indexOf(ms.myUserId) >= 0
-				@connection.unflag(x, y, ms.myUserId) #unflag if already flagged
-				@game.board.unflag(x, y, ms.myUserId)
+		if cell.status != ms.CELL_STATUS.Uncovered
+			if cell.flagOwnerIds.indexOf(ms.myUserId) >= 0
+				@unflag(x, y)
 			else
-				@connection.flag(cellTouchedIndices.x, cellTouchedIndices.y, ms.myUserId)
-				@game.board.flag(x, y, ms.myUserId)
+				@flag(x, y)
 		@_displayCellState(cell)
 	
 	handleRightMouseUp: (e)->
@@ -220,41 +189,33 @@ class ms.MinesweeperController
 			return
 		x = cellTouchedIndices.x
 		y = cellTouchedIndices.y
-		cell = @game.board.get(x, y)
-		if cell.Status == ms.CELL_STATUS.Uncovered
-			numMinedNeighbors = @game.board.getNumMinedNeighbors(x, y)
-			toUncover = @_expandableNeighbors(x, y)
-			neighbors = @game.board.neighbors(x, y)
-			coveredNeighbors = ( neighbor for neighbor in neighbors when neighbor.Status == ms.CELL_STATUS.Covered )
-			numMyFlags = ( neighbor for neighbor in coveredNeighbors when neighbor.FlagOwnerIds.indexOf(ms.myUserId) >= 0 ).length
-			if numMyFlags == numMinedNeighbors
-				@uncover(neighbor.X, neighbor.Y) for neighbor in toUncover
+		@specialUncover(x, y)
 		@_select([])
 			
 	displayUserCursor: (i, j, userId, color)->
 		@boardLayer.displayCursor(i, j, userId, color)
 		
 	_displayCellState: (cell)->
-		if cell.Status == ms.CELL_STATUS.Uncovered
-			if cell.Type == ms.CELL_TYPE.Mined 
-				@boardLayer.displayMined(cell.X, cell.Y)
+		if cell.status == ms.CELL_STATUS.Uncovered
+			if cell.type == ms.CELL_TYPE.Mined 
+				@boardLayer.displayMined(cell.x, cell.y)
 				return
-			numMinedNeighbors = @game.board.getNumMinedNeighbors(cell.X, cell.Y)
-			color = if cell.OwnerId == ms.myUserId then ms.COLORS.CellUncovered.Mine else ms.COLORS.CellUncovered.Theirs
-			@boardLayer.displayNumMinedNeighbors(cell.X, cell.Y, numMinedNeighbors, color)
+			numMinedNeighbors = @game.board.getNumMinedNeighbors(cell.x, cell.y)
+			color = if cell.ownerId == ms.myUserId then ms.COLORS.CellUncovered.Mine else ms.COLORS.CellUncovered.Theirs
+			@boardLayer.displayNumMinedNeighbors(cell.x, cell.y, numMinedNeighbors, color)
 			#	cellLabel = cc.LabelTTF.create(numMinedNeighbors.toString(), 'Tahoma', 16, cc.size(CELL_WIDTH, CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
 			#	cellLabel = cc.LabelBMFont.create(numMinedNeighbors.toString(), "/Content/arial16.fnt", CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
 			#	cellLabel.setPosition(CELL_WIDTH / 2, CELL_WIDTH / 2)
 			#	cellLabel.setColor(ms.COLORS.CellLabels[numMinedNeighbors - 1])
 			#	cellLayer.addChild cellLabel
 		else #check for flags
-			if cell.FlagOwnerIds.length == 0
-				@boardLayer.removeFlag(cell.X, cell.Y)
+			if cell.flagOwnerIds.length == 0
+				@boardLayer.removeFlag(cell.x, cell.y)
 				return
-			if cell.FlagOwnerIds.indexOf(ms.myUserId) >= 0
-				@boardLayer.displayFlag(cell.X, cell.Y, ms.myUserId)
+			if cell.flagOwnerIds.indexOf(ms.myUserId) >= 0
+				@boardLayer.displayFlag(cell.x, cell.y, ms.myUserId)
 			else
-				@boardLayer.displayFlag(cell.X, cell.Y, cell.FlagOwnerIds[0]) 
+				@boardLayer.displayFlag(cell.x, cell.y, cell.flagOwnerIds[0]) 
 	
 	_cellTouchedIndices: (loc)->
 		blockWidth = ms.CELL_WIDTH + ms.BORDER_WIDTH
@@ -264,13 +225,6 @@ class ms.MinesweeperController
 			return null
 		return new cc.Point(i, j)
 	
-	_expandableNeighbors: (x, y)->
-		neighbors = @game.board.neighbors(x ,y)
-		expandable = (cell for cell in neighbors when cell.Status is ms.CELL_STATUS.Covered and cell.FlagOwnerIds.indexOf(ms.myUserId) < 0)
-		#console.log toSelect.length
-
-		return expandable
-	
 	_select: (cells)->
 		toDeselect = []
 		for oldCell in _selected
@@ -279,13 +233,13 @@ class ms.MinesweeperController
 		@_deselect cell for cell in toDeselect
 		for cell in cells
 			if _selected.indexOf(cell) < 0
-				@boardLayer.cellToScale(cell.X, cell.Y, .8)
+				@boardLayer.cellToScale(cell.x, cell.y, .8)
 				_selected.push(cell)
 		
 	_deselect: (cell)->
 		index = _selected.indexOf(cell)
 		_selected.splice(index, 1)
-		@boardLayer.cellToScale(cell.X, cell.Y, 1)
+		@boardLayer.cellToScale(cell.x, cell.y, 1)
 	
 	_fireLeftMouseWentUp: ()->
 		if _leftMouseWentUpTimeout?

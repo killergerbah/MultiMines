@@ -60,7 +60,7 @@ namespace MultiMines.GameLogic
                         currNumMines++;
                         continue;
                     }
-                    if (rand.NextDouble() < mineProbability)
+                    if (rand.NextDouble() < (double) NumMines / index)
                     {
                         //swap current cell randomly into the list of mined cells
                         var select = rand.Next(mined.Length);
@@ -79,14 +79,13 @@ namespace MultiMines.GameLogic
             set { _board[i + 1, j + 1] = value; }
         }
 
-        //Returns true if cell at position i, j is a mine
-        public bool Uncover(int i, int j, int userId)
+        public void Uncover(int i, int j, int userId)
         {
             var cell = this[i, j];
             if (cell.Type == CellType.Mined)
             {
                 cell.Uncover(userId);
-                return true;
+                return;
             }
 
             Queue<MinesweeperCell> toCascade = new Queue<MinesweeperCell>();
@@ -112,7 +111,36 @@ namespace MultiMines.GameLogic
                     }
                 }
             }
-            return false;
+        }
+
+        public void SpecialUncover(int i, int j, int userId)
+        {
+            var cell = this[i, j];
+            if (cell.Status == CellStatus.Uncovered)
+            {
+                var neighbors = _neighbors(i, j);
+                var numMyFlags = neighbors.Where((x) =>
+                    {
+                        return x.Status == CellStatus.Covered &&
+                            x.FlagOwnerIds.Contains(userId);
+                    }).ToArray().Length;
+                var numMinedNeighbors = neighbors.Where((x) =>
+                    {
+                        return x.Type == CellType.Mined;
+                    }).ToArray().Length;
+                if (numMyFlags == numMinedNeighbors)
+                {
+                    var toCascade = neighbors.Where((x) =>
+                    {
+                        return x.Status == CellStatus.Covered &&
+                            !x.FlagOwnerIds.Contains(userId);
+                    });
+                    foreach (MinesweeperCell neighbor in toCascade)
+                    {
+                        Uncover(neighbor.X, neighbor.Y, userId);
+                    }
+                }
+            }
         }
 
         public void Flag(int i, int j, int userId)

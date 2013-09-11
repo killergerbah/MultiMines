@@ -39,8 +39,8 @@ ms.minesweeperHub.client.setBoard = (serializedBoard)->
 			layer = new ms.CCMinesweeperBoardLayer(ms.board.width, ms.board.height)
 			layer.init()
 			@addChild layer
-			ms.game = new ms.Minesweeper(ms.board)
-			ms.controller = new ms.MinesweeperController(ms.game, layer, ms.connection)
+			ms.game = new ms.Minesweeper(ms.board, ms.connection)
+			ms.controller = new ms.MinesweeperController(ms.game, layer)
 			ms.controller.displayBoard()
 	}
 	minesweeperApp = new cocos2dApp(ms.minesweeperScene)
@@ -58,12 +58,11 @@ ms.minesweeperHub.client.setMyUserId = (userId)->
 		throw "You need to log-in before playing!"
 	ms.myUserId = userId
 
-ms.minesweeperHub.client.sync = (serverBoard)->
+ms.minesweeperHub.client.sync = (serverState)->
 	if not ms.controller?
 		return
-	serverBoard = new ms.MinesweeperBoard(JSON.parse(serverBoard))
-	console.log "?"
-	ms.controller.sync(serverBoard)
+	stateObject = JSON.parse(serverState)
+	ms.controller.sync(new ms.MinesweeperBoard(stateObject.board), stateObject.eventJournal)
 	
 ms.minesweeperHub.client.displayUserCursor = (i, j, userId)->
 	if not ms.controller?
