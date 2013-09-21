@@ -25,7 +25,7 @@ namespace MultiMines.GameLogic
         public int? OwnerId { get; set; }
 
         [DataMember]
-        public HashSet<int> FlagOwnerIds { get; set; } //using list because set is not serializable
+        public int? FlagOwnerId { get; set; }
 
         [DataMember]
         public CellType Type { get; set; }
@@ -45,7 +45,6 @@ namespace MultiMines.GameLogic
             Y = y;
             Type = type;
             Status = CellStatus.Covered;
-            FlagOwnerIds = new HashSet<int>();
         }
 
         public MinesweeperCell(int x, int y, CellType type, CellStatus status)
@@ -54,7 +53,6 @@ namespace MultiMines.GameLogic
             Y = y;
             Type = type;
             Status = status;
-            FlagOwnerIds = new HashSet<int>();
         }
 
         public MinesweeperCell(int x, int y, CellType type, CellStatus status, int ownerId) :
@@ -71,13 +69,15 @@ namespace MultiMines.GameLogic
 
         public void Flag(int ownerId)
         {
-            FlagOwnerIds.Add(ownerId);
-
+            FlagOwnerId = ownerId;
         }
 
         public void Unflag(int ownerId)
         {
-            FlagOwnerIds.Remove(ownerId);
+            if (ownerId == FlagOwnerId)
+            {
+                FlagOwnerId = null;
+            }
         }
 
         public object Clone()

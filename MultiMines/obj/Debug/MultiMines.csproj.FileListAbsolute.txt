@@ -44,7 +44,6 @@ C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Sas
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\SassAndCoffee.JavaScript.dll
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\SassAndCoffee.Ruby.dll
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\arial16.png
-C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\Nimbus.fnt
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\arial16.fnt
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\DotNetOpenAuth.AspNet.dll
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\DotNetOpenAuth.Core.dll
@@ -74,3 +73,7 @@ C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scr
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\minesweeper_view.coffee
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\minesweeper_game.combine
 C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Scripts\main.coffee
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\larabie-16.png
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\west_england-64.png
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\west_england-64.fnt
+C:\Users\R-J\Documents\Visual Studio 2012\Projects\MultiMines\MultiMines\bin\Content\larabie-16.plist

@@ -1,2 +1,3 @@
-﻿~/Scripts/minesweeper.coffee
+﻿~/Scripts/minesweeper_constants.coffee
+~/Scripts/minesweeper.coffee
 ~/Scripts/minesweeper_view.coffee

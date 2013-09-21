@@ -93,7 +93,7 @@ namespace MultiMines.GameLogic
             while (toCascade.Any())
             {
                 cell = toCascade.Dequeue();
-                if (cell.Status == CellStatus.Uncovered || cell.FlagOwnerIds.Any()) //skip if flagged
+                if (cell.Status == CellStatus.Uncovered || cell.FlagOwnerId != null) //skip if flagged
                 {
                     continue;
                 }
@@ -119,21 +119,21 @@ namespace MultiMines.GameLogic
             if (cell.Status == CellStatus.Uncovered)
             {
                 var neighbors = _neighbors(i, j);
-                var numMyFlags = neighbors.Where((x) =>
+                var numFlags = neighbors.Where((x) =>
                     {
                         return x.Status == CellStatus.Covered &&
-                            x.FlagOwnerIds.Contains(userId);
+                            x.FlagOwnerId != null;
                     }).ToArray().Length;
                 var numMinedNeighbors = neighbors.Where((x) =>
                     {
                         return x.Type == CellType.Mined;
                     }).ToArray().Length;
-                if (numMyFlags == numMinedNeighbors)
+                if (numFlags == numMinedNeighbors)
                 {
                     var toCascade = neighbors.Where((x) =>
                     {
                         return x.Status == CellStatus.Covered &&
-                            !x.FlagOwnerIds.Contains(userId);
+                            x.FlagOwnerId == null;
                     });
                     foreach (MinesweeperCell neighbor in toCascade)
                     {

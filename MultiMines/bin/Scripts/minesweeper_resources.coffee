@@ -1,9 +1,21 @@
 ﻿ms = this.ms ? (this.ms = {})
+ms.Paths = {
+	Font: "/Content/arial16.fnt"
+	FontSprites: "/Content/arial16.png"
+	Mine: "/Content/mine.png"
+	FlagRed: "/Content/flag_red.png"
+	FlagBlue: "/Content/flag_blue.png"
+	CursorRed: "/Content/cursor_blue.png"
+	CursorBlue: "/Content/cursor_blue.png"
+	Penalty: "/Content/penalty.png"
+}
 ms.g_resources = [
-	{src: "/Content/arial16.fnt"}
-	{src: "/Content/mine.png"}
-	{src: "/Content/flag_blue.png"}
-	{src: "/Content/flag_red.png"}
-	{src: "/Content/cursor_blue.png"}
-	{src: "/Content/cursor_red.png"}
+	{src: ms.Paths.Font}
+	{src: ms.Paths.FontSprites}
+	{src: ms.Paths.Mine}
+	{src: ms.Paths.FlagRed}
+	{src: ms.Paths.FlagBlue}
+	{src: ms.Paths.CursorRed}
+	{src: ms.Paths.CursorBlue}
+	{src: ms.Paths.Penalty}
 ]

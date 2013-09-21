@@ -20,12 +20,12 @@ namespace MultiMines.GameLogic
 
         public DateTimeOffset Timestamp { get; private set; }
 
-        public MinesweeperEvent(Action<int, int, int> action, int arg1, int arg2, int arg3, long id)
+        public MinesweeperEvent(string callBackKey, MinesweeperEventArgs e)
         {
-            CallbackKey = action.Method.Name;
-            Args = new List<int> { arg1, arg2 };
+            CallbackKey = callBackKey;
+            Args = new List<int> { e.X, e.Y, e.UserId };
+            Id = e.EventId;
             Timestamp = DateTimeOffset.Now;
-            Id = id;
         }
 
 

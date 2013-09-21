@@ -14,8 +14,11 @@ namespace MultiMines.Hubs
 {
     public class MinesweeperHub : Hub
     {
+        static int GAME_WIDTH = 30;
+        static int GAME_HEIGHT = 16;
+        static int NUM_MINES = 99;
         //temporary; serve static board for testing purposes
-        public static Minesweeper Game = new Minesweeper(30, 16, 99);
+        public static MinesweeperGame Game = new MinesweeperGame(GAME_WIDTH, GAME_HEIGHT, NUM_MINES);
 
         private static JsonSerializerSettings _jsonSettings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
@@ -71,39 +74,39 @@ namespace MultiMines.Hubs
             _broadcaster = broadcaster;
         }
 
-        public void GetBoard()
+        public string GetBoard()
         {
-            Clients.Caller.SetBoard(JsonConvert.SerializeObject(Game.Board, _jsonSettings));
+            return JsonConvert.SerializeObject(Game.Controller.Board, _jsonSettings);
         }
 
         public void Uncover(int i, int j, int userId, long eventId)
         {
-            Game.Uncover(i, j, userId, eventId);
+            Game.Controller.OnUncover(new MinesweeperEventArgs(i, j, userId, eventId));
             _broadcaster.UpdateState();
             //Clients.Others.Uncover(i, j);
         }
 
         public void Flag(int i, int j, int userId, long eventId)
         {
-            Game.Flag(i, j, userId, eventId);
+            Game.Controller.OnFlag(new MinesweeperEventArgs(i, j, userId, eventId));
             _broadcaster.UpdateState();
         }
 
         public void Unflag(int i, int j, int userId, long eventId)
         {
-            Game.Unflag(i, j, userId, eventId);
+            Game.Controller.OnUnflag(new MinesweeperEventArgs(i, j, userId, eventId));
             _broadcaster.UpdateState();
         }
 
         public void SpecialUncover(int i, int j, int userId, long eventId)
         {
-            Game.SpecialUncover(i, j, userId, eventId);
+            Game.Controller.OnSpecialUncover(new MinesweeperEventArgs(i, j, userId, eventId));
             _broadcaster.UpdateState();
         }
 
         public void ResetBoard()
         {
-            Game = new Minesweeper(30, 16, 99);
+            Game = new MinesweeperGame(GAME_WIDTH, GAME_HEIGHT, NUM_MINES);
             Clients.All.Refresh();
         }
 
@@ -112,9 +115,9 @@ namespace MultiMines.Hubs
             Clients.Others.DisplayUserCursor(i, j, userId);
         }
 
-        public void GetMyUserId()
+        public int GetMyUserId()
         {
-            Clients.Caller.SetMyUserId(WebSecurity.CurrentUserId);
+            return WebSecurity.CurrentUserId;
         }
     }
 }

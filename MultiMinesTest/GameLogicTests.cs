@@ -12,7 +12,7 @@ namespace MultiMinesTest
         public void MinesweeperBoard_WithCorrectNumberOfMines_InitializesBoard()
         {
             int width = 50, height = 50, numMines = 100;
-            Minesweeper game = new Minesweeper(width, height, numMines);
+            MinesweeperController game = new MinesweeperController(width, height, numMines);
             var board = game.Board;
             var actualNumMines = 0;
             for (var i = 0; i < width; i++)
