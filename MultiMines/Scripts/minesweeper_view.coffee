@@ -104,11 +104,11 @@ class ms.MinesweeperViewController
 		if userId == ms.Instance.myUserId
 			_this = this
 			_inPenalty = true
-			@boardLayer.tintBy(-30, -30, -30)
+			@boardLayer.fadeTo(ms.Constants.PENALTY_OPACITY)
 			setTimeout(()->
 				_inPenalty = false
 				#_this.flag(x, y)
-				_this.boardLayer.tintBy(30, 30, 30)
+				_this.boardLayer.fadeTo(255)
 			ms.Constants.BASE_PENALTY
 			)
 			@gameController.onPenalize(x, y)
@@ -349,18 +349,18 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		cellLayer = @get(i, j)
 		if not cellLayer?
 			return
-		cellLayer.removeAllChildren()
+		cellLayer.removeChildByTag(ms.Constants.TAGS.Primary)
 	
 	displayFlag: (i, j, id)->
 		cellLayer = @get(i, j)
 		if not cellLayer?
 			return
-		cellLayer.removeAllChildren()
+		cellLayer.removeChildByTag(ms.Constants.TAGS.Primary)
 		flagSprite = cc.Sprite.create(ms.Paths.Flag)
 		flagSprite.setScale(ms.Constants.FLAG_SCALE)
 		flagSprite.setPosition(ms.Constants.CELL_WIDTH / 2, ms.Constants.CELL_WIDTH / 2)
 		flagSprite.setColor(if id == ms.Instance.myUserId then ms.Constants.COLORS.User.Mine.Main else ms.Constants.COLORS.User.Theirs.Main)
-		cellLayer.addChild(flagSprite, ms.Constants.TAGS.Flag, ms.Constants.TAGS.Flag)
+		cellLayer.addChild(flagSprite, ms.Constants.TAGS.Primary, ms.Constants.TAGS.Primary)
 		
 	displayCovered: (i, j)->
 		cellLayer = @get(i, j)
@@ -372,12 +372,12 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		cellLayer = @get(i, j)
 		if not cellLayer?
 			return
-		cellLayer.removeAllChildren()
+		cellLayer.removeChildByTag(ms.Constants.TAGS.Primary)
 		cellLabel = cc.LabelBMFont.create("X", ms.Paths.Font, ms.Constants.CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
 		#cellLabel = cc.LabelTTF.create("X", "Arial", cc.size(ms.CELL_WIDTH, ms.CELL_WIDTH), cc.TEXT_ALIGNMENT_CENTER)
 		cellLabel.setPosition(ms.Constants.CELL_WIDTH / 2, ms.Constants.CELL_WIDTH / 2)
 		cellLabel.setColor(new cc.Color4B(0, 0, 0, 255))
-		cellLayer.addChild cellLabel
+		cellLayer.addChild(cellLabel, ms.Constants.TAGS.Primary, ms.Constants.TAGS.Primary)
 		
 	displayNumMinedNeighbors: (i, j, numMinedNeighbors, color)->
 		cellLayer = @get(i, j)
@@ -390,7 +390,7 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 			cellLabel = cc.LabelBMFont.create(numMinedNeighbors.toString(), ms.Paths.Font, ms.Constants.CELL_WIDTH, cc.TEXT_ALIGNMENT_CENTER)
 			cellLabel.setPosition(ms.Constants.CELL_WIDTH / 2, ms.Constants.CELL_WIDTH / 2)
 			cellLabel.setColor(ms.Constants.COLORS.CellLabels[numMinedNeighbors - 1])
-			cellLayer.addChild cellLabel
+			cellLayer.addChild(cellLabel, ms.Constants.TAGS.Primary, ms.Constants.TAGS.Primary)
 
 	cursorToScale: (scale, id)->
 		cursor = @users[id].cursor
@@ -406,12 +406,12 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		cellLayer = @get(x, y)
 		if not cellLayer?
 			return
-		cellLayer.removeAllChildren()
+		cellLayer.removeChildByTag(ms.Constants.TAGS.Primary)
 		mineSprite = cc.Sprite.create(ms.Paths.Mine)
 		mineSprite.setPosition(ms.Constants.CELL_WIDTH / 2, ms.Constants.CELL_WIDTH / 2)
 		mineSprite.setColor(new cc.Color4B(0, 0, 0, 255))
 		mineSprite.setScale(ms.Constants.MINE_SCALE)
-		cellLayer.addChild mineSprite
+		cellLayer.addChild(mineSprite, ms.Constants.TAGS.Temporary)
 		seconds = Math.floor(time / 1000)
 		fadeAction = cc.FadeOut.create(1)
 		repeatAction = cc.Repeat.create(fadeAction, seconds)
@@ -420,10 +420,10 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 			mineSprite.removeFromParent(true)
 		time)
 	
-	tintBy: (dr, dg, db)->
+	fadeTo: (opacity)->
 		for i in [0..@height - 1]
 			for j in [0..@width - 1]
-				@get(i, j).runAction(cc.TintBy.create(.05, dr, dg, db))
+				@get(i, j).runAction(cc.FadeTo.create(.05, opacity))
 	
 	get: (i, j)->
 		return @cellMap[i][j]

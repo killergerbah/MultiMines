@@ -13,11 +13,13 @@ ms.Constants = {
 	FLAG_SCALE: .3
 	FLAG_SCORE_SCALE: .4
 	CLOCK_SCALE: .35
+	PENALTY_OPACITY: 150
 	BOTH_MOUSE_UP_WINDOW: 100
 	BASE_PENALTY: 3000
 	UPDATE_INTERVAL: 100
 	TAGS: {
-		Flag: 1
+		Primary: 1
+		Temporary: 2
 	}
 	COLORS: {
 		CellIdle: new cc.Color4B(253, 253, 253, 255)
