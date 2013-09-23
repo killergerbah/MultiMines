@@ -10,6 +10,23 @@ ms.CELL_STATUS = {
 	Uncovered: 1
 }
 
+class ms.MinesweeperEvents
+	_cb = {}
+	
+	constructor: ()->
+
+	trigger: (eventName, args)->
+		for cb in _cb[eventName]
+			cb.callback.apply(cb.this, args)
+			
+	on: (eventName, callback, _this)->
+		if not _cb[eventName]?
+			_cb[eventName] = []
+		_cb[eventName].push({
+			callback: callback,
+			this: _this
+		})
+
 class ms.MinesweeperConnection
 	_updateCallbacks = []
 
@@ -19,7 +36,7 @@ class ms.MinesweeperConnection
 			args: args
 		})
 	
-	_updateInterval = ms.UPDATE_INTERVAL #default value
+	_updateInterval = ms.Constants.UPDATE_INTERVAL #default value
 	_queueAvailable = true
 	_update = ()->
 		#console.log("something")
@@ -34,32 +51,38 @@ class ms.MinesweeperConnection
 		_update()
 		
 	uncover: (i, j, eventId)->
-		_queueCallback(@minesweeperHub.server.uncover, [i, j, ms.myUserId, eventId])
+		_queueCallback(@minesweeperHub.server.uncover, [i, j, ms.Instance.myUserId, eventId])
 	
-	displayUserCursor: (i, j)->
+	displayUserMouse: (x, y)->
 		if _queueAvailable
-			_queueCallback(@minesweeperHub.server.displayUserCursor, [i, j, ms.myUserId])
+			_queueCallback(@minesweeperHub.server.displayUserMouse, [x, y, ms.Instance.myUserId])
 		_queueAvailable = false
 		
 	flag: (i, j, eventId)->
-		_queueCallback(@minesweeperHub.server.flag, [i, j, ms.myUserId, eventId])
+		@minesweeperHub.server.flag(i, j, ms.Instance.myUserId, eventId)
 	
 	unflag: (i, j, eventId)->
-		_queueCallback(@minesweeperHub.server.unflag, [i, j, ms.myUserId, eventId])	
+		@minesweeperHub.server.unflag(i, j, ms.Instance.myUserId, eventId)
 		
 	specialUncover: (i, j, eventId)->
-		_queueCallback(@minesweeperHub.server.specialUncover, [i, j, ms.myUserId, eventId])	
+		@minesweeperHub.server.specialUncover(i, j, ms.Instance.myUserId, eventId)
 		
-class ms.Minesweeper
+	penalize: (i, j)->
+		@minesweeperHub.server.penalize(i, j, ms.Instance.myUserId)
+		
+class ms.MinesweeperGame
 	EVENT_WINDOW = 1000
 	_generateId = ()->
 		return Math.floor(Math.random() * 10000000)
 		
-	constructor: (board, connection, journal) ->
-		@board = board
-		@connection = connection
-		@eventJournal = journal ? []
-	
+	constructor: (@gameController, @connection)->
+		ms.Instance.Events.on("uncover", @_handleUncover, this)
+		ms.Instance.Events.on("specialUncover", @_handleSpecialUncover, this)
+		ms.Instance.Events.on("flag", @_handleFlag, this)
+		ms.Instance.Events.on("unflag", @_handleUnflag, this)
+		ms.Instance.Events.on("displayUserMouse", @_handleDisplayUserMouse, this)
+		ms.Instance.Events.on("penalize", @_handlePenalize, this)
+		@eventJournal = []
 	
 	_recordEvent: (callbackKey, args, id)->
 		@eventJournal.push({
@@ -83,65 +106,93 @@ class ms.Minesweeper
 			return
 		@eventJournal = ( @eventJournal[i] for i in [index..length - 1] )
 	
-	sync: (serverBoard, serverEventJournal)->
-		#console.log(serverBoard)
+	sync: (serverState)->
+		serverEventJournal = serverState.eventJournal
+		serverBoard = new ms.MinesweeperBoard(serverState.controller.board)
+		
 		length = @eventJournal.length
-		if length == 0
-			@board = serverBoard
-			return
+		if length > 0
+			eventIndex = 0
+			that = this
+			#find latest common event between server and client journals
+			(()->
+				for sEvent in serverEventJournal
+					eventIndex = 0
+					for cEvent in that.eventJournal
+						if cEvent.id == sEvent.id
+							return
+						eventIndex++
+			)()
+			console.log("playing back " + (length - eventIndex - 1) + " events")
 			
-		index = 0
-		that = this
-		#find latest common event between server and client journals
-		(()->
-			for sEvent in serverEventJournal
-				index = 0
-				for cEvent in that.eventJournal
-					if cEvent.id == sEvent.id
-						return
-					index++
-		)()
-		console.log("playing back " + (length - index - 1) + " events")
-		if index >= length - 1
-			return
-		for i in [index + 1..length - 1]
-			event = @eventJournal[i]
-			serverBoard[event.callbackKey].apply(serverBoard, event.args)
+			#if nothing found assume server has newest state and quit
+			if eventIndex < length - 1
+				for i in [eventIndex + 1..length - 1]
+					event = @eventJournal[i]
+					serverBoard[event.callbackKey].apply(serverBoard, event.args)
+			@_pruneJournal()
 			
-		@board = serverBoard
-		@_pruneJournal()
-	
-	uncover: (i, j)->
-		uncovered = @board.uncover(i, j)
+		@gameController.board = serverBoard
+		ms.Instance.scores = serverState.scores
+		ms.Instance.timeElapsed = serverState.timeElapsed;
+		ms.Instance.Events.trigger("sync", [ ])
+		
+	_handleUncover: (i, j)->
 		eventId = _generateId()
 		@_recordEvent("uncover", [i, j], eventId)
 		@connection.uncover(i, j, eventId)
-		return uncovered
 		
-	flag: (i, j)->
-		@board.flag(i, j)
-		eventId = _generateId()
-		@_recordEvent("flag", [i, j], eventId)
-		@connection.flag(i, j, eventId)
-		
-	unflag: (i, j)->
-		@board.unflag(i, j)
-		eventId = _generateId()
-		@_recordEvent("unflag", [i, j], eventId)
-		@connection.unflag(i, j, eventId)
-		
-	specialUncover: (i, j)->
-		uncovered = @board.specialUncover(i, j)
+	_handleSpecialUncover: (i, j)->
 		eventId = _generateId()
 		@_recordEvent("specialUncover", [i, j], eventId)
 		@connection.specialUncover(i, j, eventId)
+	
+	_handleFlag: (i, j)->
+		eventId = _generateId()
+		@_recordEvent("flag", [i, j], eventId)
+		@connection.flag(i, j, eventId)
+	
+	_handleUnflag: (i, j)->
+		eventId = _generateId()
+		@_recordEvent("unflag", [i, j], eventId)
+		@connection.unflag(i, j, eventId)
+
+	_handleDisplayUserMouse: (x, y)->
+		@connection.displayUserMouse(x, y)
+		
+	_handlePenalize: (i, j)->
+		@connection.penalize(i, j)
+	
+class ms.MinesweeperGameController		
+	constructor: (board) ->
+		@board = board
+		
+	onUncover: (i, j)->
+		uncovered = @board.uncover(i, j)
+		ms.Instance.Events.trigger("uncover", [i, j])
 		return uncovered
 		
-	displayUserCursor: (i, j)->
-		@connection.displayUserCursor(i, j)
+	onFlag: (i, j)->
+		@board.flag(i, j)
+		ms.Instance.Events.trigger("flag", [i, j])
+		
+	onUnflag: (i, j)->
+		@board.unflag(i, j)
+		ms.Instance.Events.trigger("unflag", [i, j])
+		
+	onSpecialUncover: (i, j)->
+		uncovered = @board.specialUncover(i, j)
+		ms.Instance.Events.trigger("specialUncover", [i, j])
+		return uncovered
+		
+	onDisplayUserMouse: (x, y)->
+		ms.Instance.Events.trigger("displayUserMouse", [x, y])
 
 	get: (i, j)->
 		return @board.get(i, j)
+		
+	onPenalize: (i, j)->
+		ms.Instance.Events.trigger("penalize", [i, j])
 		
 class ms.MinesweeperBoard
 	_board = null
@@ -184,31 +235,29 @@ class ms.MinesweeperBoard
 	
 	flag: (x, y)->
 		cell = @get(x, y)
-		if cell.flagOwnerIds.indexOf(ms.myUserId) >= 0
+		if cell.flagOwnerId != null
 			return
-		cell.flagOwnerIds.push(ms.myUserId)
+		cell.flagOwnerId = ms.Instance.myUserId
 	
 	unflag: (x, y)->
 		cell = @get(x, y)
-		index = cell.flagOwnerIds.indexOf(ms.myUserId)
-		if index >= 0
-			cell.flagOwnerIds.splice(index, 1)
+		if cell.flagOwnerId == ms.Instance.myUserId
+			cell.flagOwnerId = null
 	
 	uncover: (x, y)->
 		cell = @get(x, y)
 		if cell.type == ms.CELL_TYPE.Mined
-			cell.status = ms.CELL_STATUS.Uncovered
-			cell.ownerId = ms.myUserId
+			#do not uncover mined cells
 			return [ cell ]
 		uncovered = []
 		queue = [ cell ]
 		while queue.length > 0
 			cell = queue.pop()
 			neighbors = this.neighbors(cell.x, cell.y)
-			if cell.status == ms.CELL_STATUS.Uncovered or cell.flagOwnerIds.length > 0
+			if cell.status == ms.CELL_STATUS.Uncovered or cell.flagOwnerId != null
 				continue
 			cell.status = ms.CELL_STATUS.Uncovered
-			cell.ownerId = ms.myUserId
+			cell.ownerId = ms.Instance.myUserId
 			uncovered.push(cell)
 			mined = ( neighbor for neighbor in neighbors when neighbor.type is ms.CELL_TYPE.Mined )
 			numMinedNeighbors = mined.length
@@ -224,9 +273,9 @@ class ms.MinesweeperBoard
 		if cell.status == ms.CELL_STATUS.Uncovered
 			numMinedNeighbors = @getNumMinedNeighbors(x, y)
 			neighbors = @neighbors(x ,y)
-			numMyFlags = ( neighbor for neighbor in neighbors when neighbor.status == ms.CELL_STATUS.Covered and neighbor.flagOwnerIds.indexOf(ms.myUserId) >= 0 ).length
-			if numMyFlags == numMinedNeighbors
-				toUncover = (cell for cell in neighbors when cell.status is ms.CELL_STATUS.Covered and cell.flagOwnerIds.indexOf(ms.myUserId) < 0)
+			numFlags = ( neighbor for neighbor in neighbors when neighbor.status == ms.CELL_STATUS.Covered and neighbor.flagOwnerId != null ).length
+			if numFlags == numMinedNeighbors
+				toUncover = (cell for cell in neighbors when cell.status is ms.CELL_STATUS.Covered and cell.flagOwnerId == null)
 				for neighbor in toUncover
 					uncovered = uncovered.concat(@uncover(neighbor.x, neighbor.y))
 		

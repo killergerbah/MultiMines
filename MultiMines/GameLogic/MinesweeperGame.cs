@@ -37,22 +37,13 @@ namespace MultiMines.GameLogic
         protected virtual void HandleFlag(object sender, MinesweeperEventArgs e)
         {
             var userId = e.UserId;
-            if(!Scores.ContainsKey(userId))
-            {
-                Scores[userId] = 0;
-            }
-            Scores[userId]++;
+            Scores[userId] = Controller.Board.GetNumFlags(userId);
         }
 
         protected virtual void HandleUnflag(object sender, MinesweeperEventArgs e)
         {
             var userId = e.UserId;
-            if (!Scores.ContainsKey(userId))
-            {
-                //shouldn't happen
-                Scores[userId] = 0;
-            }
-            Scores[userId]--;
+            Scores[userId] = Controller.Board.GetNumFlags(userId);
         }
 
         protected virtual void HandleUncover(object sender, MinesweeperEventArgs e)

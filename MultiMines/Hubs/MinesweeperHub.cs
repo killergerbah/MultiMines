@@ -74,34 +74,33 @@ namespace MultiMines.Hubs
             _broadcaster = broadcaster;
         }
 
-        public string GetBoard()
+        public void Join()
         {
-            return JsonConvert.SerializeObject(Game.Controller.Board, _jsonSettings);
+            Clients.Caller.InitBoard(JsonConvert.SerializeObject(Game, _jsonSettings), WebSecurity.CurrentUserId);
         }
 
         public void Uncover(int i, int j, int userId, long eventId)
         {
             Game.Controller.OnUncover(new MinesweeperEventArgs(i, j, userId, eventId));
-            _broadcaster.UpdateState();
-            //Clients.Others.Uncover(i, j);
+            Clients.All.Sync(JsonConvert.SerializeObject(Game, _jsonSettings));
         }
 
         public void Flag(int i, int j, int userId, long eventId)
         {
             Game.Controller.OnFlag(new MinesweeperEventArgs(i, j, userId, eventId));
-            _broadcaster.UpdateState();
+            Clients.All.Sync(JsonConvert.SerializeObject(Game, _jsonSettings));
         }
 
         public void Unflag(int i, int j, int userId, long eventId)
         {
             Game.Controller.OnUnflag(new MinesweeperEventArgs(i, j, userId, eventId));
-            _broadcaster.UpdateState();
+            Clients.All.Sync(JsonConvert.SerializeObject(Game, _jsonSettings));
         }
 
         public void SpecialUncover(int i, int j, int userId, long eventId)
         {
             Game.Controller.OnSpecialUncover(new MinesweeperEventArgs(i, j, userId, eventId));
-            _broadcaster.UpdateState();
+            Clients.All.Sync(JsonConvert.SerializeObject(Game, _jsonSettings));
         }
 
         public void ResetBoard()
@@ -110,14 +109,14 @@ namespace MultiMines.Hubs
             Clients.All.Refresh();
         }
 
-        public void DisplayUserCursor(int i, int j, int userId)
+        public void DisplayUserMouse(double x, double y, int userId)
         {
-            Clients.Others.DisplayUserCursor(i, j, userId);
+            Clients.Others.DisplayUserMouse(x, y, userId);
         }
 
-        public int GetMyUserId()
+        public void Penalize(int i, int j, int userId)
         {
-            return WebSecurity.CurrentUserId;
+            Clients.Others.Penalize(i, j, userId);
         }
     }
 }

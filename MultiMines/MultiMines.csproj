@@ -203,16 +203,21 @@
     <Content Include="Content\arial16.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\consolas24_0.png" />
+    <Content Include="Content\consolas_0.png" />
     <Content Include="Content\cursor_blue.png" />
     <Content Include="Content\cursor_red.png" />
+    <Content Include="Content\flag.png" />
     <Content Include="Content\flag_blue.png" />
     <Content Include="Content\flag_red.png" />
     <Content Include="Content\larabie-16.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\mine.png" />
+    <Content Include="Content\mouse.png" />
     <Content Include="Content\penalty.png" />
     <Content Include="Content\Stylesheets\minesweeper.css" />
+    <Content Include="Content\time.png" />
     <Content Include="Content\west_england-64.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -226,6 +231,8 @@
     <Content Include="Content\larabie-16.plist">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\consolas.fnt" />
+    <Content Include="Content\consolas24.fnt" />
     <None Include="Scripts\jquery-1.9.1.intellisense.js" />
     <Content Include="Scripts\jquery-1.9.1.js" />
     <Content Include="Scripts\jquery-1.9.1.min.js" />

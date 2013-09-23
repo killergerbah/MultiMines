@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MultiMines.GameLogic;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace MultiMinesTest
 {
@@ -104,5 +105,18 @@ namespace MultiMinesTest
                 }
             }
         }
+
+        /*[TestMethod]
+        public void MinesweeperBoardEnumerator_EnumeratesEntireBoard()
+        {
+            int width = 50, height = 50, numMines = 10, expected = width * height;
+            var board = new MinesweeperBoard(width, height, numMines);
+            var cells = new HashSet<MinesweeperCell>();
+            foreach(MinesweeperCell cell in board)
+            {
+                cells.Add(cell);
+            }
+            Assert.AreEqual(expected, cells.Count, "MinesweeperBoardEnumerator enumerated the board incorrectly");
+        }*/
     }
 }

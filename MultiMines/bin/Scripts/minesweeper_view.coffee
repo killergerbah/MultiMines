@@ -3,7 +3,6 @@
 class ms.MinesweeperViewController
 	_selected = []
 	_myCurrentColor = ms.Constants.COLORS.User.Mine.Up
-	_myLastPosition = null
 	_isLeftMouseDown = false
 	_isRightMouseDown = false
 	_leftMouseWentUp = false
@@ -29,13 +28,14 @@ class ms.MinesweeperViewController
 	
 	displayGame: ()->
 		for userId of ms.Instance.scores
-			@gameLayer.displayScore(ms.Instance.scores[userId], userId)
+			@gameLayer.displayScore(ms.Instance.scores[userId], parseInt(userId))
 		@gameLayer.displayTime(Math.floor(ms.Instance.timeElapsed / 1000))
 			
 	uncover: (i, j)->
 		uncovered = @gameController.onUncover(i, j)
 		for cell in uncovered
 			@_displayCellState(cell)
+		return uncovered
 			
 	flag: (i, j)->
 		@gameController.onFlag(i, j)
@@ -49,35 +49,41 @@ class ms.MinesweeperViewController
 		uncovered = @gameController.onSpecialUncover(i, j)
 		for cell in uncovered
 			@_displayCellState(cell)
+		return uncovered
 			
+	displayUserMouse: (x, y, userId)->
+		if userId == ms.Instance.myUserId
+			return
+		cellTouchedIndices = @_cellTouchedIndices(new cc.Point(x, y))
+		if not cellTouchedIndices?
+			return
+		i = cellTouchedIndices.x
+		j = cellTouchedIndices.y
+		@boardLayer.displayCursor(i, j, userId)
+		@boardLayer.displayMouse(x, y, userId)
+		
 	_handleSync: ()->
 		@displayGame()
 		@displayBoard()
 		
 	_handleMouseMoved: (e)->
-		#console.log "moved"
-		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
+		loc = e.getLocation()
+		cellTouchedIndices = @_cellTouchedIndices(loc)
 		if not cellTouchedIndices?
 			return
-		#console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)
-		x = cellTouchedIndices.x
-		y = cellTouchedIndices.y
-		#check position actually changed
-		if _myLastPosition? and _myLastPosition.x == x and _myLastPosition.y == y
-			return
-		_myLastPosition = cellTouchedIndices
-		@gameController.onDisplayUserCursor(x, y) 
-		@displayUserCursor(x, y, ms.Instance.myUserId, _myCurrentColor)
+		i = cellTouchedIndices.x
+		j = cellTouchedIndices.y
+		@gameController.onDisplayUserMouse(loc.x, loc.y) 
+		@boardLayer.displayCursor(i, j, ms.Instance.myUserId)
 	
 	_handleMouseUp: (e)->
-		if _inPenalty
-			return
-			
 		_isLeftMouseDown = false
 		@boardLayer.cursorToScale(1, ms.Instance.myUserId)
 		if _rightMouseWentUp
 			@_handleBothMouseUp(e)
 			return
+		if _inPenalty
+			return		
 		if not _isRightMouseDown
 			cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
 			if not cellTouchedIndices?
@@ -85,33 +91,37 @@ class ms.MinesweeperViewController
 			x = cellTouchedIndices.x
 			y = cellTouchedIndices.y
 			cell = @gameController.get(x, y)
-			if cell.type == ms.CELL_TYPE.Mined
-				@_penalizeThenFlag(x, y)
-			else
-				@uncover(x, y)
+			if cell.flagOwnerId == null
+				if cell.status == ms.CELL_STATUS.Covered and cell.type == ms.CELL_TYPE.Mined
+					@penalize(x, y, ms.Instance.myUserId)
+				else
+					@uncover(x, y)
 		_myCurrentColor = ms.Constants.COLORS.User.Mine.Up
 		@_select([])
 		@_fireLeftMouseWentUp()
 	
-	_penalizeThenFlag: (x, y)->
-		_this = this
-		_inPenalty = true
-		@boardLayer.displayPenaltyTimer(ms.Constants.BASE_PENALTY)
-		setTimeout(()->
-			_inPenalty = false
-			_this.flag(x, y)
-		ms.Constants.BASE_PENALTY
-		)
+	penalize: (x, y, userId)->
+		if userId == ms.Instance.myUserId
+			_this = this
+			_inPenalty = true
+			@boardLayer.tintBy(-30, -30, -30)
+			setTimeout(()->
+				_inPenalty = false
+				#_this.flag(x, y)
+				_this.boardLayer.tintBy(30, 30, 30)
+			ms.Constants.BASE_PENALTY
+			)
+			@gameController.onPenalize(x, y)
+		@boardLayer.blinkMine(x, y, ms.Constants.BASE_PENALTY)
 		
 	_handleMouseDown: (e)->
-		if _inPenalty
-			return
-			
+
 		_isLeftMouseDown = true
 		if _isRightMouseDown
 			@_handleBothMouseDown(e)
 			return
-
+		if _inPenalty
+				return		
 		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
 		if not cellTouchedIndices?
 			return
@@ -119,11 +129,14 @@ class ms.MinesweeperViewController
 		y = cellTouchedIndices.y
 		console.log(cellTouchedIndices.x + " " + cellTouchedIndices.y)	
 		_myCurrentColor = ms.Constants.COLORS.User.Mine.Down
-		@displayUserCursor(x, y, ms.Instance.myUserId, _myCurrentColor)
-		if @gameController.get(x, y).status != ms.CELL_STATUS.Uncovered
+		@boardLayer.displayCursor(x, y, ms.Instance.myUserId, _myCurrentColor)
+		cell = @gameController.get(x, y)
+		if cell.status == ms.CELL_STATUS.Covered and cell.flagOwnerId == null
 			@_select([ @gameController.get(x, y) ])
 		
 	_handleBothMouseDown: (e)->
+		if _inPenalty
+			return
 		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
 		if not cellTouchedIndices?
 			return
@@ -131,21 +144,19 @@ class ms.MinesweeperViewController
 		y = cellTouchedIndices.y
 		@boardLayer.cursorToScale(3.1, ms.Instance.myUserId)
 		neighbors = @gameController.board.neighbors(x ,y)
-		toSelect = (cell for cell in neighbors when cell.status is ms.CELL_STATUS.Covered and cell.flagOwnerId != null)
+		toSelect = (cell for cell in neighbors when cell.status is ms.CELL_STATUS.Covered and cell.flagOwnerId == null)
 		cell = @gameController.board.get(x, y)
 		if cell.status == ms.CELL_STATUS.Covered and cell.flagOwnerId == null
 			toSelect.push(cell)
 		@_select(toSelect)
 		
 	_handleRightMouseDown: (e)->
-		if _inPenalty
-			return
-			
 		_isRightMouseDown = true
 		if _isLeftMouseDown
 			@_handleBothMouseDown(e)
 			return
-
+		if _inPenalty
+			return	
 		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
 		if not cellTouchedIndices?
 			return
@@ -160,9 +171,6 @@ class ms.MinesweeperViewController
 		@_displayCellState(cell)
 	
 	_handleRightMouseUp: (e)->
-		if _inPenalty
-			return
-			
 		_isRightMouseDown = false
 		@boardLayer.cursorToScale(1, ms.Instance.myUserId)
 		if _leftMouseWentUp
@@ -184,16 +192,21 @@ class ms.MinesweeperViewController
 			@_handleBothMouseDown(e)
 
 	_handleBothMouseUp: (e)->
+		@_select([])
+		if _inPenalty
+			return
 		cellTouchedIndices = @_cellTouchedIndices(e.getLocation())
 		if not cellTouchedIndices?
 			return
 		x = cellTouchedIndices.x
 		y = cellTouchedIndices.y
-		@specialUncover(x, y)
-		@_select([])
-			
-	displayUserCursor: (i, j, userId, color)->
-		@boardLayer.displayCursor(i, j, userId, color)
+		if @gameController.canSpecialUncover(x, y)
+			neighbors = @gameController.neighbors(x, y)
+			for cell in neighbors
+				if cell.flagOwnerId == null and cell.status == ms.CELL_STATUS.Covered and cell.type == ms.CELL_TYPE.Mined
+					@penalize(cell.x, cell.y, ms.Instance.myUserId)
+					return
+			@specialUncover(x, y)
 		
 	_displayCellState: (cell)->
 		if cell.status == ms.CELL_STATUS.Uncovered
@@ -264,7 +277,7 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 	ctor: (width, height)->
 		@width = width
 		@height = height
-		@cursors = {}
+		@users = {}
 		@cellMap = {}
 		for i in [0..@height - 1] #initialize board
 			@cellMap[i] = {}
@@ -272,7 +285,7 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 	init: ()->
 		@_super()
 		@setMouseEnabled(true)
-		@background = cc.LayerColor.create(ms.Constants.COLORS.Background, ms.Constants.BORDER_WIDTH * (@width + 1) + (@width * ms.CELL_WIDTH) , ms.Constants.BORDER_WIDTH * (@height + 1) + (@height * ms.Constants.CELL_WIDTH))
+		@background = cc.LayerColor.create(ms.Constants.COLORS.Transparent, ms.Constants.BORDER_WIDTH * (@width + 1) + (@width * ms.CELL_WIDTH) , ms.Constants.BORDER_WIDTH * (@height + 1) + (@height * ms.Constants.CELL_WIDTH))
 		@background.setAnchorPoint(new cc.Point(0, 0))
 		@addChild @background
 	
@@ -285,7 +298,11 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 				@cellMap[i][j] = minesweeperCellLayerColor
 				
 	displayCursor: (i, j, id)->
-		cursor = @cursors[id]
+		user = @users[id]
+		if not user?
+			user = {}
+			@users[id] = user
+		cursor = user.cursor
 		if not cursor?
 			cursor = cc.LayerColor.create()
 			if id == ms.Instance.myUserId
@@ -293,12 +310,37 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 			else
 				color = ms.Constants.COLORS.User.Theirs.Up
 			cursor.init(color, ms.Constants.CELL_WIDTH, ms.Constants.CELL_WIDTH)
-			@cursors[id] = cursor
+			user.cursor = cursor
 			@addChild cursor, 2
 		cursor.setPosition(@get(i, j).getPosition())
 
+	displayMouse: (x, y, id)->
+		user = @users[id]
+		if not user?
+			user = {}
+			@users[id] = user
+		mouse = user.mouse
+		if not mouse?
+			mouse = cc.Sprite.create(ms.Paths.Mouse)
+			mouse.setScale(ms.Constants.MOUSE_SCALE)
+			mouse.setOpacity(127)
+			mouse.setAnchorPoint(new cc.Point(.8, 2.7))
+			@addChild mouse, 3
+			user.mouse = mouse
+		lastTimeStamp = user.timeStamp
+		if not lastTimeStamp?
+			mouse.setPosition(x, y)
+			user.timeStamp = new Date()
+			return
+		lastPosition = mouse.getPosition()
+		deltaPosition = new cc.Point(x - lastPosition.x, y - lastPosition.y)
+		deltaTime = (new Date().getTime() - lastTimeStamp.getTime()) / 1000
+		mouse.stopAllActions()
+		mouse.runAction(cc.MoveBy.create(deltaTime, deltaPosition))
+		user.timeStamp = new Date()
+		
 	displayPenaltyTimer: (time)->
-		cursor = @cursors[ms.Instance.myUserId]
+		cursor = @users[ms.Instance.myUserId].cursor
 		penaltyTimer = new ms.CCPenaltyTimer(time)
 		penaltyTimer.init()
 		cursor.addChild(penaltyTimer)
@@ -314,16 +356,10 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		if not cellLayer?
 			return
 		cellLayer.removeAllChildren()
-		if id == ms.Instance.myUserId
-			spritePath = ms.Paths.FlagBlue
-			opacity = 255
-		else
-			spritePath = ms.Paths.FlagRed
-			opacity = 80
-		flagSprite = cc.Sprite.create(spritePath)
-		flagSprite.setScale(ms.Constants.CELL_WIDTH / ms.Constants.FLAG_WIDTH)
-		flagSprite.setOpacity(opacity)
+		flagSprite = cc.Sprite.create(ms.Paths.Flag)
+		flagSprite.setScale(ms.Constants.FLAG_SCALE)
 		flagSprite.setPosition(ms.Constants.CELL_WIDTH / 2, ms.Constants.CELL_WIDTH / 2)
+		flagSprite.setColor(if id == ms.Instance.myUserId then ms.Constants.COLORS.User.Mine.Main else ms.Constants.COLORS.User.Theirs.Main)
 		cellLayer.addChild(flagSprite, ms.Constants.TAGS.Flag, ms.Constants.TAGS.Flag)
 		
 	displayCovered: (i, j)->
@@ -357,7 +393,7 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 			cellLayer.addChild cellLabel
 
 	cursorToScale: (scale, id)->
-		cursor = @cursors[id]
+		cursor = @users[id].cursor
 		cursor.setScale(scale)
 	
 	cellToScale: (x, y, scale)->
@@ -365,6 +401,29 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 		if not cellLayer?
 			return
 		cellLayer.setScale(scale)
+	
+	blinkMine: (x, y, time)->
+		cellLayer = @get(x, y)
+		if not cellLayer?
+			return
+		cellLayer.removeAllChildren()
+		mineSprite = cc.Sprite.create(ms.Paths.Mine)
+		mineSprite.setPosition(ms.Constants.CELL_WIDTH / 2, ms.Constants.CELL_WIDTH / 2)
+		mineSprite.setColor(new cc.Color4B(0, 0, 0, 255))
+		mineSprite.setScale(ms.Constants.MINE_SCALE)
+		cellLayer.addChild mineSprite
+		seconds = Math.floor(time / 1000)
+		fadeAction = cc.FadeOut.create(1)
+		repeatAction = cc.Repeat.create(fadeAction, seconds)
+		mineSprite.runAction(repeatAction)
+		setTimeout(()->
+			mineSprite.removeFromParent(true)
+		time)
+	
+	tintBy: (dr, dg, db)->
+		for i in [0..@height - 1]
+			for j in [0..@width - 1]
+				@get(i, j).runAction(cc.TintBy.create(.05, dr, dg, db))
 	
 	get: (i, j)->
 		return @cellMap[i][j]
@@ -394,34 +453,65 @@ ms.CCMinesweeperBoardLayer = cc.Layer.extend {
 
 ms.CCMinesweeperGameLayer = cc.Layer.extend({
 	ctor: (@width, @height, @boardLayer)->
-		@_scoreCount = 0
 		@_scoreLabels = {}
-		@_timerLabel = cc.LabelBMFont.create("", ms.Paths.Font, ms.Constants.SCORE_WIDTH, cc.TEXT_ALIGNMENT_LEFT)
-		@_timerLabel.setPosition(ms.Constants.GAME_PADDING_X, ms.Constants.GAME_PADDING_Y)
-		@_timerLabel.setColor(new cc.Color4B(0, 0, 0, 255))
+		@_timerLabel = null
+		@_timerInterval = null
+		@_users = {}
+		@_userCount = 0
 		
 	init: ()->
 		@_super()
 		@setMouseEnabled(true)
-		@background = cc.LayerColor.create(ms.Constants.COLORS.GameBackground, @width, @height)
+		@_background = cc.LayerColor.create(ms.Constants.COLORS.GameBackground, @width, @height)
 		@boardLayer.setPosition(ms.Constants.GAME_PADDING_X, ms.Constants.HUD_HEIGHT + ms.Constants.GAME_PADDING_Y)
-		@addChild @background
+		@_clockSprite = cc.Sprite.create(ms.Paths.Clock)
+		@_clockSprite.setColor(new cc.Color3B(0, 0, 0))
+		@_clockSprite.setScale(ms.Constants.CLOCK_SCALE)
+		@_clockSprite.setAnchorPoint(new cc.Point(0, .5))
+		@_clockSprite.setPosition(ms.Constants.GAME_PADDING_X, ms.Constants.GAME_PADDING_Y)
+		@_timerLabel = cc.LabelBMFont.create("", ms.Paths.LargeFont, ms.Constants.SCORE_WIDTH, cc.TEXT_ALIGNMENT_LEFT)
+		@_timerLabel.setPosition(ms.Constants.GAME_PADDING_X + @_clockSprite.getContentSize().width * ms.Constants.CLOCK_SCALE + 5, ms.Constants.GAME_PADDING_Y)
+		@_timerLabel.setAnchorPoint(new cc.Point(0, .5))
+		@_timerLabel.setColor(new cc.Color4B(0, 0, 0, 255))
+		@addChild @_background
 		@addChild @boardLayer
+		@addChild @_clockSprite
 		@addChild @_timerLabel
 		
 	displayTime: (time)->
+		_this = this
+		if @_timerInterval?
+			clearInterval(@_timerInterval)
 		@_timerLabel.setCString(time.toString())
+		@_timerInterval = setInterval(()->
+			time++
+			_this._timerLabel.setCString(time.toString())
+		1000)
 	
 	displayScore: (score, userId)->
-		if not @_scoreLabels[userId]?
-			scoreLabel = cc.LabelBMFont.create("", ms.Paths.Font, ms.Constants.SCORE_WIDTH, cc.TEXT_ALIGNMENT_LEFT)
-			@_scoreLabels[userId] = scoreLabel
-			scoreLabel.setPosition(ms.Instance.CANVAS_WIDTH - ms.Constants.GAME_PADDING_X - @_scoreCount * ms.Constants.SCORE_WIDTH, ms.Constants.GAME_PADDING_Y)
+		user = @_users[userId]
+		if not user?
+			user = {}
+			user.order = @_userCount
+			@_users[userId] = user	
+			@_userCount++
+		scoreLabel = user.scoreLabel
+		if not scoreLabel?
+			scoreLabel = cc.LabelBMFont.create("", ms.Paths.LargeFont, ms.Constants.SCORE_WIDTH, cc.TEXT_ALIGNMENT_RIGHT)
+			scoreLabel.setPosition(ms.Instance.CANVAS_WIDTH - ms.Constants.GAME_PADDING_X - user.order * ms.Constants.SCORE_WIDTH, ms.Constants.GAME_PADDING_Y)
+			scoreLabel.setAnchorPoint(new cc.Point(1, .5))
 			scoreLabel.setColor(new cc.Color4B(0, 0, 0, 255))
+			user.scoreLabel = scoreLabel
 			@addChild scoreLabel
-			@_scoreCount++
-		else
-			scoreLabel = @_scoreLabels[userId]
+		scoreSprite = user.scoreSprite
+		if not scoreSprite?
+			scoreSprite = cc.Sprite.create(ms.Paths.Flag)
+			scoreSprite.setColor(if userId == ms.Instance.myUserId then ms.Constants.COLORS.User.Mine.Main else ms.Constants.COLORS.User.Theirs.Main)
+			scoreSprite.setScale(ms.Constants.FLAG_SCORE_SCALE)
+			scoreSprite.setAnchorPoint(new cc.Point(1, .5))
+			user.scoreSprite = scoreSprite
+			@addChild scoreSprite
+		scoreSprite.setPosition(ms.Instance.CANVAS_WIDTH - ms.Constants.GAME_PADDING_X - (user.order - 1) * ms.Constants.SCORE_WIDTH - scoreSprite.getContentSize().width - 20, ms.Constants.GAME_PADDING_Y)
 		scoreLabel.setCString(score.toString())
 })
 

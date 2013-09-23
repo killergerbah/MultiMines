@@ -36,17 +36,22 @@ ms.Instance.minesweeperHub.client.sync = (serverState)->
 	stateObject = JSON.parse(serverState)
 	ms.Instance.game.sync(stateObject)
 
-ms.Instance.minesweeperHub.client.displayUserCursor = (i, j, userId)->
+ms.Instance.minesweeperHub.client.displayUserMouse = (x, y, userId)->
 	if not ms.Instance.controller?
 		return
-	if userId == ms.Instance.myUserId
-		ms.Instance.controller.displayUserCursor(i, j, userId, ms.Constants.COLORS.User.Mine.Up)
-	else
-		ms.Instance.controller.displayUserCursor(i, j, userId, ms.Constants.COLORS.User.Theirs.Up)
+	ms.Instance.controller.displayUserMouse(x, y, userId)
 
-setBoard = (serializedBoard)->
-	ms.Instance.board = new ms.MinesweeperBoard(JSON.parse(serializedBoard))
-	ms.Instance.scores = {}
+ms.Instance.minesweeperHub.client.penalize = (x, y, userId)->
+	if not ms.Instance.controller?
+		return
+	ms.Instance.controller.penalize(x, y, userId)
+	
+ms.Instance.minesweeperHub.client.initBoard = (serverState, myUserId)->
+	ms.Instance.myUserId = myUserId
+	stateObject = JSON.parse(serverState)
+	ms.Instance.board = new ms.MinesweeperBoard(stateObject.controller.board)
+	ms.Instance.scores = stateObject.scores
+	ms.Instance.timeElapsed = stateObject.timeElapsed
 	ms.Instance.CANVAS_WIDTH = ms.Instance.board.width * (ms.Constants.CELL_WIDTH + ms.Constants.BORDER_WIDTH) + ms.Constants.BORDER_WIDTH + ms.Constants.GAME_PADDING_X * 2
 	ms.Instance.CANVAS_HEIGHT = ms.Instance.board.height * (ms.Constants.CELL_WIDTH + ms.Constants.BORDER_WIDTH) + ms.Constants.GAME_PADDING_Y * 2 + ms.Constants.HUD_HEIGHT
 	$("canvas")
@@ -55,8 +60,6 @@ setBoard = (serializedBoard)->
 	ms.minesweeperScene = cc.Scene.extend {
 		onEnter: ()->
 			@_super()
-			#hack to get font to load
-			#@addChild cc.LabelBMFont.create(" ", "/Content/arial16.fnt", 50, cc.TEXT_ALIGNMENT_CENTER)
 			ms.Instance.gameController = new ms.MinesweeperGameController(ms.Instance.board)
 			boardLayer = new ms.CCMinesweeperBoardLayer(ms.Instance.board.width, ms.Instance.board.height)
 			boardLayer.init()
@@ -66,19 +69,15 @@ setBoard = (serializedBoard)->
 			@addChild gameLayer
 			ms.Instance.controller = new ms.MinesweeperViewController(ms.Instance.gameController, boardLayer, gameLayer)
 			ms.Instance.controller.displayBoard()
+			ms.Instance.controller.displayGame()
 	}
-	minesweeperApp = new cocos2dApp(ms.minesweeperScene)
+	ms.Instance.minesweeperApp = new cocos2dApp(ms.minesweeperScene)
 
 		
 #add delay in case websockets might cause hub not to start otherwise
 setTimeout(()->	
 	$.connection.hub.start().done(()->
-		ms.Instance.myUserId = ms.Instance.minesweeperHub.server.getMyUserId().done((d)->
-			ms.Instance.myUserId = d
-			ms.Instance.minesweeperHub.server.getBoard().done((d_)->
-				setBoard(d_)
-			)
-		)
+		ms.Instance.minesweeperHub.server.join()
 		$("#reset_board").click((e)->
 			e.preventDefault()
 			ms.Instance.minesweeperHub.server.resetBoard()

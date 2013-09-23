@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -20,6 +21,14 @@ namespace MultiMines.GameLogic
 
         [DataMember]
         public int NumMines { get; private set; }
+
+        public int Count
+        {
+            get
+            {
+                return Width * Height;
+            }
+        }
 
         public MinesweeperBoard(int width, int height)
         {
@@ -84,7 +93,7 @@ namespace MultiMines.GameLogic
             var cell = this[i, j];
             if (cell.Type == CellType.Mined)
             {
-                cell.Uncover(userId);
+                //do not uncover mined cells
                 return;
             }
 
@@ -168,6 +177,22 @@ namespace MultiMines.GameLogic
             }.Where((x) => { return x != null; }).ToList();
         }
 
+        public int GetNumFlags(int userId)
+        {
+            var numFlags = 0;
+            for (var i = 0; i < Height; i++)
+            {
+                for (var j = 0; j < Width; j++)
+                {
+                    if (this[i, j].FlagOwnerId == userId)
+                    {
+                        numFlags++;
+                    }
+                }
+            }
+            return numFlags;
+        }
+
         public object Clone()
         {
             var clone = new MinesweeperBoard(Width, Height);
@@ -181,4 +206,51 @@ namespace MultiMines.GameLogic
             return clone;
         }
     }
+    /*
+    public class MinesweeperBoardEnumerator : IEnumerator<MinesweeperCell>
+    {
+        public MinesweeperBoard _board;
+        int position = -1;
+ 
+        public MinesweeperBoardEnumerator(MinesweeperBoard board)
+        {
+            _board = board;
+        }
+
+        public bool MoveNext()
+        {
+            position++;
+            return position < _board.Count;
+        }
+
+        public void Reset()
+        {
+            position = -1;
+        }
+
+        object IEnumerator.Current
+        {
+            get
+            {
+                return Current;
+            }
+        }
+
+        public MinesweeperCell Current
+        {
+            get
+            {
+                try
+                {
+                    return _board[position / _board.Width, position % _board.Width];
+                }
+                catch (InvalidOperationException)
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+        }
+
+        void IDisposable.Dispose() { }
+    }*/
 }
